@@ -58,3 +58,75 @@
 
 // Plugins
 @import "plugins/free/plugins";
+
+// Theme Colors
+$primary: #00ffff !default;
+$secondary: #6c757d !default;
+$success: #39ff14 !default;
+$info: #9b59b6 !default;
+$warning: #ffc107 !default;
+$danger: #dc3545 !default;
+$light: #f8f9fa !default;
+$dark: #141727 !default;
+
+// Body
+$body-bg: #ffffff !default;
+$body-color: #212529 !default;
+
+// Typography
+$font-family-sans-serif: "Open Sans", sans-serif !default;
+$font-size-base: 1rem !default;
+$font-weight-normal: 400 !default;
+$line-height-base: 1.5 !default;
+
+// Headings
+$headings-color: #212529 !default;
+$headings-font-weight: 600 !default;
+
+// Links
+$link-color: $primary !default;
+$link-hover-color: darken($link-color, 15%) !default;
+
+// Components
+$border-radius: 0.375rem !default;
+$border-radius-sm: 0.25rem !default;
+$border-radius-lg: 0.5rem !default;
+$border-radius-xl: 1rem !default;
+$border-radius-2xl: 1.5rem !default;
+$border-radius-pill: 50rem !default;
+
+// Cards
+$card-bg: #ffffff !default;
+$card-border-color: rgba(0, 0, 0, 0.125) !default;
+$card-border-radius: $border-radius !default;
+
+// Buttons
+$btn-font-weight: 500 !default;
+$btn-border-radius: $border-radius !default;
+$btn-border-radius-sm: $border-radius-sm !default;
+$btn-border-radius-lg: $border-radius-lg !default;
+
+// Navbar
+$navbar-padding-y: 1rem !default;
+$navbar-padding-x: 1rem !default;
+$navbar-bg: #ffffff !default;
+$navbar-color: #212529 !default;
+
+// Sidebar
+$sidebar-width: 250px !default;
+$sidebar-bg: #ffffff !default;
+$sidebar-color: #212529 !default;
+
+// Footer
+$footer-bg: #ffffff !default;
+$footer-color: #212529 !default;
+
+// Shadows
+$box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !default;
+$box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !default;
+$box-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175) !default;
+
+// Transitions
+$transition-base: all 0.2s ease-in-out !default;
+$transition-fade: opacity 0.15s linear !default;
+$transition-collapse: height 0.35s ease !default;

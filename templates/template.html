@@ -210,26 +210,57 @@
                     >RUN</a
                   >
                 </li>
-                <!--                        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">-->
-                <!--                            <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">-->
-                <!--                                <div class="sidenav-toggler-inner">-->
-                <!--                                    <i class="sidenav-toggler-line"></i>-->
-                <!--                                    <i class="sidenav-toggler-line"></i>-->
-                <!--                                    <i class="sidenav-toggler-line"></i>-->
-                <!--                                </div>-->
-                <!--                            </a>-->
-                <!--                        </li>-->
-                <!--                        <li class="nav-item px-3 d-flex align-items-center">-->
-                <!--                            <a href="javascript:;" class="nav-link text-body p-0">-->
-                <!--                                <i class="fa fa-cog fixed-plugin-button-nav cursor-pointer"></i>-->
-                <!--                            </a>-->
-                <!--                        </li>-->
+                {% if current_user.is_authenticated %}
+                <li class="nav-item d-flex align-items-center">
+                  <div class="dropdown">
+                    <button class="btn btn-outline-primary btn-sm mb-0 me-3 position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="fa fa-bell"></i>
+                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge">
+                        0
+                      </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 300px;">
+                      <h6 class="dropdown-header">Notifications</h6>
+                      <div id="notificationList" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Notifications will be loaded here -->
+                      </div>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item text-center" onclick="clearNotifications()">Clear all</button>
+                    </div>
+                  </div>
+                </li>
+                <li class="nav-item d-flex align-items-center">
+                  <a
+                    class="btn btn-outline-danger btn-sm mb-0 me-3"
+                    href="{{ url_for('logout') }}"
+                    >Logout</a
+                  >
+                </li>
+                {% else %}
+                <li class="nav-item d-flex align-items-center">
+                  <a
+                    class="btn btn-outline-primary btn-sm mb-0 me-3"
+                    href="{{ url_for('login') }}"
+                    >Login</a
+                  >
+                </li>
+                {% endif %}
               </ul>
             </div>
           </div>
         </div>
       </nav>
       <!-- End Navbar -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
       <div class="container-fluid py-4">{% block content %} {% endblock %}</div>
     </main>
     <div class="fixed-plugin">
@@ -543,5 +574,69 @@
     <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
     <script src="{{ url_for('static', filename='assets/js/soft-ui-dashboard.min.js')}}?v=1.0.6"></script>
     {% block js %} {% endblock %}
+    <script>
+    function loadNotifications() {
+        fetch('/notifications')
+            .then(response => response.json())
+            .then(data => {
+                const notificationList = document.getElementById('notificationList');
+                const notificationBadge = document.getElementById('notificationBadge');
+                const unreadCount = data.notifications.filter(n => !n.read).length;
+                
+                notificationBadge.textContent = unreadCount;
+                notificationBadge.style.display = unreadCount > 0 ? 'block' : 'none';
+                
+                notificationList.innerHTML = '';
+                data.notifications.forEach(notification => {
+                    const notificationElement = document.createElement('div');
+                    notificationElement.className = `dropdown-item ${notification.read ? 'text-muted' : ''}`;
+                    notificationElement.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="mb-0">${notification.message}</p>
+                                <small class="text-muted">${new Date(notification.timestamp).toLocaleString()}</small>
+                            </div>
+                            ${!notification.read ? `
+                                <button class="btn btn-link btn-sm text-primary" onclick="markAsRead(${notification.id})">
+                                    Mark as read
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                    notificationList.appendChild(notificationElement);
+                });
+                
+                if (data.notifications.length === 0) {
+                    notificationList.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
+                }
+            });
+    }
+
+    function markAsRead(notificationId) {
+        fetch(`/notifications/mark-read/${notificationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(() => loadNotifications());
+    }
+
+    function clearNotifications() {
+        fetch('/notifications/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(() => loadNotifications());
+    }
+
+    // Load notifications when the page loads
+    document.addEventListener('DOMContentLoaded', loadNotifications);
+
+    // Refresh notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
+    </script>
   </body>
 </html>

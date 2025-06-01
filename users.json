@@ -1,0 +1,22 @@
+{
+    "1": {
+        "username": "test",
+        "email": "kologanel@gmail.com",
+        "password": "scrypt:32768:8:1$XibM2UFRuXp68s6q$6cebab972ade339143e1cc395ad7b25282eacbf00691c565f92c00159262f1604f3c83504a3d3bef59b279d797b25451ca277fcdbd82ddb90095f6e9f5d7b11e",
+        "created_at": "2025-06-01T20:51:33.593188",
+        "last_login": NaN,
+        "failed_login_attempts": 0,
+        "is_active": true,
+        "verification_token": "NgNi1ioEoHwoxQ2iz1wBGIjJC6eyoZwIghq-uXW8LPc"
+    },
+    "2": {
+        "username": "ali",
+        "email": "allalsjodjh@gmail.com",
+        "password": "scrypt:32768:8:1$bVwMFqYNTQHqpV26$092a8df6d337298299fc4106792c99a3742ef05e323a7432b5881b3efe852348091a3555615b20fbd1e957267f52446e7b648e4adda6fb1e578aca04f9ed5ded",
+        "created_at": "2025-06-01T21:25:08.832968",
+        "last_login": "2025-06-01T22:15:21.535736",
+        "failed_login_attempts": 0,
+        "is_active": true,
+        "verification_token": "YBjY5IWBxhwHfUrrfz5x2ifVP_GMdE3AtYnfYxq2k8Q"
+    }
+}

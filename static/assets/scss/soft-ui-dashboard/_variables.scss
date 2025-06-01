@@ -3,10 +3,9 @@
 // Variables should follow the `$component-state-property-size` formula for
 // consistent naming. Ex: $nav-link-disabled-color and $modal-content-box-shadow-xs.
 
-// $soft-background-color: #fbfbfb !default;
-$soft-background-color: #ffffff !default; // Testing
-$font-color:            #67748e !default;
-$h-color:               #344767 !default;
+$soft-background-color: #1a1a2e; // Dark futuristic background
+$font-color:            #e0e0e0; // Light gray text
+$h-color:               #ffffff; // White headings
 
 // Color system
 
@@ -24,16 +23,16 @@ $black:    #000 !default;
 
 // fusv-enable
 
-$blue:    #63B3ED !default;
+$blue:    #00aaff; // Vibrant blue
 $indigo:  #596CFF !default;
-$purple:  #6f42c1 !default;
-$pink:    #d63384 !default;
+$purple:  #9b59b6; // Futuristic purple
+$pink:    #ff0077; // Electric pink
 $red:     #F56565 !default;
 $orange:  #fd7e14 !default;
 $yellow:  #FBD38D !default;
-$green:   #81E6D9 !default;
+$green:   #39ff14; // Neon green
 $teal:    #20c997 !default;
-$cyan:    #0dcaf0 !default;
+$cyan:    #00ffff; // Electric cyan
 
 // scss-docs-start colors-map
 $colors: (
@@ -53,14 +52,14 @@ $colors: (
 ) !default;
 // scss-docs-end colors-map
 
-$primary:       #cb0c9f !default;
+$primary:       #f0f0f0 !default; // Use light gray for primary
 $secondary:     #8392AB !default;
-$info:          #17c1e8 !default;
-$success:       #82d616 !default;
+$info:          #9b59b6; // Use futuristic purple for info
+$success:       #39ff14; // Use neon green for success
 $warning:       #fbcf33 !default;
 $danger:        #ea0606 !default;
 $light:         $gray-200 !default;
-$dark:          $h-color !default;
+$dark:          #141727; // Darker dark color
 
 // scss-docs-start theme-colors-map
 $theme-colors: (
@@ -77,33 +76,33 @@ $theme-colors: (
 // scss-docs-end theme-colors-map
 
 
-// Gradient colors
-$primary-gradient:            #7928CA !default;
-$primary-gradient-state:      #FF0080 !default;
+// Gradient colors (Adjust if gradients are used)
+$primary-gradient:            #f0f0f0 !default;
+$primary-gradient-state:      #cccccc !default;
 
-$secondary-gradient:          #627594 !default;
-$secondary-gradient-state:    #A8B8D8 !default;
+$secondary-gradient:          #6c757d !default;
+$secondary-gradient-state:    #5a6268 !default;
 
-$info-gradient:               #2152ff !default;
-$info-gradient-state:         #21d4fd !default;
+$info-gradient:               #9b59b6 !default;
+$info-gradient-state:         #7d4f9a !default;
 
-$success-gradient:            #17ad37 !default;
-$success-gradient-state:      #98ec2d !default;
+$success-gradient:            #008000 !default;
+$success-gradient-state:      #008000 !default;
 
-$danger-gradient:             #ea0606 !default;
-$danger-gradient-state:       #ff667c !default;
+$danger-gradient:             #FF0000 !default;
+$danger-gradient-state:       #FF0000 !default;
 
-$warning-gradient:            #f53939 !default;
-$warning-gradient-state:      #fbcf33 !default;
+$warning-gradient:            #ffc107 !default;
+$warning-gradient-state:      #d39e00 !default;
 
 $dark-gradient:               #141727 !default;
-$dark-gradient-state:         #3A416F !default;
+$dark-gradient-state:         #000000 !default;
 
-$light-gradient:              #CED4DA !default;
-$light-gradient-state:        #EBEFF4 !default;
+$light-gradient:              #f8f9fa !default;
+$light-gradient-state:        #e2e6ea !default;
 
-$dark-gradient-dark:          #323a54 !default;
-$dark-gradient-state-dark:    #1a2035 !default;
+$dark-gradient-dark:          #1a2035 !default;
+$dark-gradient-state-dark:    #000000 !default;
 
 // Gradient Colors map
 $theme-gradient-colors: (
@@ -776,7 +775,7 @@ $btn-just-icon-lg-top:        2px !default;
 // we've overwritten the default Bootstrap function
 // for dynamically adding font color since the colors
 // added by that function were not correctly set
-$btn-primary-font-color:      #fff !default;
+$btn-primary-font-color:      #212529 !default;
 $btn-secondary-font-color:    #fff !default;
 $btn-danger-font-color:       #fff !default;
 $btn-info-font-color:         #fff !default;

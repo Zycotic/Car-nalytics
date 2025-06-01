@@ -185,16 +185,16 @@ active {% endblock %} {% block content %} {% if filename %}
                   <div class="col-xl-3 col-md-6 mb-xl-4 mb-3">
                     <div class="card card-blog card-plain">
                       <div class="position-relative">
-                        <a href="{{'/' + i.split('/')[-1] }}" class="d-block">
+                        <a href="{{ url_for('static', filename=i) }}" class="d-block">
                           <img
-                            src="{{'/' + i.split('/')[-1] }}"
+                            src="{{ url_for('static', filename=i) }}"
                             alt="img-blur-shadow"
                             class="img-fluid shadow border-radius-xl"
                           />
                         </a>
                       </div>
                       <div class="card-body px-1 pb-0">
-                        <a href="{{'/' + i.split('/')[-1] }}">
+                        <a href="{{ url_for('static', filename=i) }}">
                           <h5>
                             {{ i.replace('\\', '/').rsplit('/',
                             1)[-1].rsplit('.', 1)[0].replace('_', ' ') }}

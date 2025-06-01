@@ -1,4 +1,5 @@
-{% extends 'template.html' %} {% block breadcrumb %}
+{% extends 'template.html' %}
+{% block breadcrumb %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
     <li class="breadcrumb-item text-sm">
@@ -10,8 +11,13 @@
   </ol>
   <h2 class="font-weight-bolder mb-0">History</h2>
 </nav>
-{% endblock %} {% block title %} History {% endblock %} {% block page1 %} active
-{% endblock %} {% block content %}
+{% endblock %}
+
+{% block title %}History{% endblock %}
+
+{% block page1 %}active{% endblock %}
+
+{% block content %}
 <div class="container-fluid py-4">
   {% for j in date %}
   <div class="col-12 mt-4">
@@ -22,36 +28,42 @@
       </div>
       <div class="card-body p-3">
         <div class="row">
-          {% for i in files %} {% if i.split('_')[0] == j %}
-          <div class="col-xl-3 col-md-6 mb-xl-0 mb-4 mt-2 align-self-end">
-            <div class="card card-blog card-plain justify-content-between">
-              <div class="position-relative">
-                <a class="d-block shadow-xl border-radius-xl">
-                  <img
-                    src="{{ url_for('static',filename='uploads/'+i+'/sementic.jpg')}}"
-                    alt="img-blur-shadow"
-                    class="img-fluid shadow border-radius-xl"
-                  />
-                </a>
-              </div>
-              <div
-                class="card-body px-1 pb-0 d-inline-block text-truncate mt-auto"
-              >
-                <p class="text-gradient text-dark mb-2 text-sm">Filename</p>
-                <a href="{{url_for('car',filename=i)}}">
-                  <h5>{{i}}</h5>
-                </a>
-                <div class="d-flex align-items-center justify-content-center">
-                  <a
-                    href="{{url_for('car',filename=i)}}"
-                    class="btn btn-outline-primary btn-sm mb-3"
-                    >Open file
+          {% for i in files %}
+            {# i is now a path like uploads/user_<user_id>/<timestamp>/original.jpg #}
+            {% set parts = i.split('/') %}
+            {% set user_dir = parts[1] %}
+            {% set timestamp = parts[2] %}
+            {% set original_filename = parts[-1] %}
+            
+            {% if timestamp.split('_')[0] == j %}
+            <div class="col-xl-3 col-md-6 mb-xl-0 mb-4 mt-2 align-self-end">
+              <div class="card card-blog card-plain justify-content-between">
+                <div class="position-relative">
+                  <a href="{{ url_for('car', filename=timestamp) }}" class="d-block shadow-xl border-radius-xl">
+                    {# Construct path to sementic.jpg using the timestamp #}
+                    <img src="{{ url_for('static', filename='uploads/' + user_dir + '/' + timestamp + '/sementic.jpg') }}"
+                         alt="img-blur-shadow"
+                         class="img-fluid shadow border-radius-xl" />
                   </a>
+                </div>
+                <div class="card-body px-1 pb-0 d-inline-block text-truncate mt-auto">
+                  <p class="text-gradient text-dark mb-2 text-sm">Original Filename</p>
+                  {# Display the original filename #}
+                  <a href="{{ url_for('car', filename=timestamp) }}">
+                    <h5>{{ original_filename }}</h5>
+                  </a>
+                  <div class="d-flex align-items-center justify-content-center">
+                    {# Link to the car route using the timestamp #}
+                    <a href="{{ url_for('car', filename=timestamp) }}"
+                       class="btn btn-outline-primary btn-sm mb-3">
+                      Open Details
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          {% endif %} {% endfor %}
+            {% endif %}
+          {% endfor %}
         </div>
       </div>
     </div>
@@ -59,3 +71,4 @@
   {% endfor %}
 </div>
 {% endblock %}
+ 
