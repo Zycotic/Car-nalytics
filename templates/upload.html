@@ -1,0 +1,113 @@
+{% extends 'template.html' %} {% block breadcrumb %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+    <li class="breadcrumb-item text-sm">
+      <a class="opacity-5 text-dark" href="{{ url_for('index') }}">Pages</a>
+    </li>
+    <li class="breadcrumb-item text-sm text-dark active" aria-current="page">
+      Home
+    </li>
+  </ol>
+  <h2 class="font-weight-bolder mb-0">Home</h2>
+</nav>
+{% endblock %} {% block title %} Upload {% endblock %} {% block page2 %} active
+{% endblock %} {% block content %}
+<div class="row mt5">
+  <h4>Select a file to upload</h4>
+  <div class="col-12">
+    <form method="post" enctype="multipart/form-data" onsubmit="loading()">
+      <div class="form-group">
+        <input
+          class="form-control form-control-lg"
+          type="file"
+          name="file"
+          class="form-control"
+          autocomplete="off"
+          required
+        />
+      </div>
+      <div class="container-fluid px-0">
+        <div class="row">
+          <div class="col-12">
+            <div class="card mb-4">
+              <div class="card-header pb-0">
+                <h6>Enter Your Prompt</h6>
+              </div>
+              <div class="card-body p-3">
+                <div class="form-group">
+                  <textarea
+                    class="form-control"
+                    name="prompt"
+                    rows="5"
+                    placeholder="Enter your prompt here..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-center">
+        <input type="submit" value="Submit" id="sub" class="btn btn-primary" />
+        <h4 class="text-info" id="loading" style="display: none" role="status">
+          <span class="spinner-border sr-only"></span> Processing . . .
+        </h4>
+      </div>
+    </form>
+  </div>
+  <div class="col-12">
+    {% with messages = get_flashed_messages() %} {% if messages %} {% for
+    message in messages %}
+    <div class="alert alert-danger text-white" role="alert">{{ message }}</div>
+    {% endfor %} {% endif %} {% endwith %}
+  </div>
+</div>
+{% if filename %}
+<div class="row mt-4">
+  <h4>
+    Result : {% if logo %} Car brand
+    <span class="badge bg-primary">{{logo}}</span> {% endif %}
+  </h4>
+  {% for i in ['Logo','Original','Sementic','Mask'] %}
+  <div class="col-md-3 mt-4">
+    <div class="card">
+      <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
+        <a
+          href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+          class="d-block"
+        >
+          <img
+            src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+            class="img-fluid border-radius-lg"
+          />
+        </a>
+      </div>
+
+      <div class="card-body pt-2">
+        <span
+          class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2"
+          >{{filename}}</span
+        >
+        <a href="javascript:;" class="card-title h5 d-block text-darker">
+          {{i}}
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="d-flex justify-content-center col-12 mt-4">
+    <a
+      href="{{ url_for('car',filename=filename.split('.')[0] ) }}"
+      class="btn btn-outline-primary btn-sm mb-3"
+      >View more</a
+    >
+  </div>
+</div>
+{% endif %} {% endblock %} {% block js %}
+<script type="text/javascript">
+  function loading() {
+    document.getElementById("sub").style.display = "none";
+    document.getElementById("loading").style.display = "block";
+  }
+</script>
+{% endblock %}

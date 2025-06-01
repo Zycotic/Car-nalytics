@@ -1,0 +1,216 @@
+{% extends 'template.html' %} {% block breadcrumb %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+    <li class="breadcrumb-item text-sm">
+      <a class="opacity-5 text-dark" href="javascript:;">Pages</a>
+    </li>
+    <li class="breadcrumb-item text-sm">
+      <a class="opacity-5 text-dark" href="{{ url_for('index') }}">Gallery</a>
+    </li>
+    <li class="breadcrumb-item text-sm text-dark active" aria-current="page">
+      {{filename}}
+    </li>
+  </ol>
+  <h2 class="font-weight-bolder mb-0">{{filename}}</h2>
+</nav>
+{% endblock %} {% block title %} {{filename}} {% endblock %} {% block page3 %}
+active {% endblock %} {% block content %} {% if filename %}
+<h2>Results!</h2>
+<h4>
+  {% if data['logo'] %} Car Brand Detection
+  <span class="badge bg-primary"
+    >{{ data['logo'].replace('\\',
+    '/').split('/')[-1].split('.')[-2].split('_')[-1].capitalize() }}
+  </span>
+  {% endif %}
+</h4>
+<div class="row mt-4 justify-content-center">
+  <form action="{{ url_for('apply_livery') }}" method="post">
+    <input
+      type="hidden"
+      name="car_image_filename"
+      value="2025-02-11_185638/original.jpg"
+    />
+    <input
+      type="hidden"
+      name="livery_image_filename"
+      value="2025-02-11_185638/logo.jpg"
+    />
+    <button type="submit" class="btn btn-primary">Apply Livery</button>
+  </form>
+  {% for i in ['logo'] %}
+  <div class="col-md-8 mb-4 d-flex justify-content-center">
+    <div class="card">
+      <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
+        <a
+          href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+          class="d-block"
+        >
+          <img
+            src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+            class="img-fluid border-radius-lg"
+          />
+        </a>
+      </div>
+      <div class="card-body pt-2 text-center">
+        <span
+          class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2"
+          >{{filename}}</span
+        >
+      </div>
+    </div>
+  </div>
+  {% endfor %} {% if data['logo'] %} {% endif %}
+</div>
+{% if modified_image %}
+<div class="row mt-4 justify-content-center">
+  <img
+    src="{{ url_for('static', filename=modified_image) }}"
+    alt="Modified Car Image"
+  />
+</div>
+{% endif %}
+
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button
+        class="accordion-button collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#collapseOne"
+        aria-expanded="false"
+        aria-controls="collapseOne"
+        style="font-size: 1.25rem"
+      >
+        <strong>Car Segmentation</strong>
+      </button>
+    </h2>
+    <div
+      id="collapseOne"
+      class="accordion-collapse collapse"
+      aria-labelledby="headingOne"
+      data-bs-parent="#accordionExample"
+    >
+      <div class="accordion-body">
+        <div class="row mt-4">
+          {% for i in ['Original','Sementic','Mask'] %}
+          <div class="col-md-4 mb-4">
+            <div class="card">
+              <div
+                class="card-header p-0 mx-3 mt-3 position-relative z-index-1"
+              >
+                <a
+                  href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+                  class="d-block"
+                >
+                  <img
+                    src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+                    class="img-fluid border-radius-lg"
+                  />
+                </a>
+              </div>
+              <div class="card-body pt-2">
+                <span
+                  class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2"
+                  >{{filename}}</span
+                >
+                <a href="javascript:;" class="card-title h5 d-block text-darker"
+                  >{{i}}</a
+                >
+                <p class="card-description"></p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% if files %}
+<div class="row mt-4">
+  <!--    <h4>Output !</h4>-->
+  <!--    {% for i in files %}-->
+  <!--    <div class="col-md-4">-->
+  <!--        <div class="card mb-4">-->
+  <!--            <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">-->
+  <!--                <a href="{{ url_for('static', filename=i.replace('/static/','')) }}" class="d-block">-->
+  <!--                    <img src="{{ url_for('static', filename=i.replace('/static/','')) }}"-->
+  <!--                         class="img-fluid border-radius-lg">-->
+  <!--                </a>-->
+  <!--            </div>-->
+
+  <!--            <div class="card-body pt-1 pb-4">-->
+  <!--                <span class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2">Part Name</span>-->
+  <!--                <a href="javascript:;" class="card-title h5 d-block text-darker">-->
+  <!--                    {{i.split('/')[-1].split('.')[0].replace('_',' ')}}-->
+  <!--                </a>-->
+  <!--            </div>-->
+  <!--        </div>-->
+  <!--    </div>-->
+
+  <!--    {% endfor %}-->
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingTwo">
+      <button
+        class="accordion-button collapsed mx-3"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#collapseTwo"
+        aria-expanded="false"
+        aria-controls="collapseTwo"
+        style="font-size: 1.25rem"
+      >
+        <strong>Parts</strong>
+      </button>
+    </h2>
+    <div
+      id="collapseTwo"
+      class="accordion-collapse collapse"
+      aria-labelledby="headingTwo"
+      data-bs-parent="#accordionExample"
+    >
+      <div class="accordion-body">
+        <div class="row mt-4">
+          <div class="col-12 mt-4">
+            <div class="card mb-4">
+              <div class="card-header pb-0 p-3">
+                <h6 class="mb-1">Parts</h6>
+                <p class="text-sm">Segmented Parts</p>
+              </div>
+              <div class="card-body p-3">
+                <div class="row">
+                  {% for i in files %}
+                  <div class="col-xl-3 col-md-6 mb-xl-4 mb-3">
+                    <div class="card card-blog card-plain">
+                      <div class="position-relative">
+                        <a href="{{'/' + i.split('/')[-1] }}" class="d-block">
+                          <img
+                            src="{{'/' + i.split('/')[-1] }}"
+                            alt="img-blur-shadow"
+                            class="img-fluid shadow border-radius-xl"
+                          />
+                        </a>
+                      </div>
+                      <div class="card-body px-1 pb-0">
+                        <a href="{{'/' + i.split('/')[-1] }}">
+                          <h5>
+                            {{ i.replace('\\', '/').rsplit('/',
+                            1)[-1].rsplit('.', 1)[0].replace('_', ' ') }}
+                          </h5>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %}
