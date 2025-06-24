@@ -26,16 +26,8 @@ active {% endblock %} {% block content %} {% if filename %}
 </h4>
 <div class="row mt-4 justify-content-center">
   <form action="{{ url_for('apply_livery') }}" method="post">
-    <input
-      type="hidden"
-      name="car_image_filename"
-      value="2025-02-11_185638/original.jpg"
-    />
-    <input
-      type="hidden"
-      name="livery_image_filename"
-      value="2025-02-11_185638/logo.jpg"
-    />
+    <input type="hidden" name="car_image_filename" value="{{ filename }}/original.jpg" />
+    <input type="hidden" name="livery_image_filename" value="{{ filename }}/logo.jpg" />
     <button type="submit" class="btn btn-primary">Apply Livery</button>
   </form>
   {% for i in ['logo'] %}
@@ -185,16 +177,16 @@ active {% endblock %} {% block content %} {% if filename %}
                   <div class="col-xl-3 col-md-6 mb-xl-4 mb-3">
                     <div class="card card-blog card-plain">
                       <div class="position-relative">
-                        <a href="{{'/' + i.split('/')[-1] }}" class="d-block">
+                        <a href="{{ url_for('static', filename=i) }}" class="d-block">
                           <img
-                            src="{{'/' + i.split('/')[-1] }}"
+                            src="{{ url_for('static', filename=i) }}"
                             alt="img-blur-shadow"
                             class="img-fluid shadow border-radius-xl"
                           />
                         </a>
                       </div>
                       <div class="card-body px-1 pb-0">
-                        <a href="{{'/' + i.split('/')[-1] }}">
+                        <a href="{{ url_for('static', filename=i) }}">
                           <h5>
                             {{ i.replace('\\', '/').rsplit('/',
                             1)[-1].rsplit('.', 1)[0].replace('_', ' ') }}
