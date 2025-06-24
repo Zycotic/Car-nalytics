@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request, render_template, flash, redirect, url_for
 from flask_cors import CORS
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import werkzeug.utils
 import os
 import cv2 as cv
@@ -22,6 +21,7 @@ import glob
 from flask_mail import Mail, Message
 import uuid
 import logging
+import shutil
 
 app = Flask(__name__)
 CORS(app)
@@ -41,11 +41,6 @@ mail = Mail(app)
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
 
 # Initialize rate limiter
 limiter = Limiter(
@@ -180,209 +175,28 @@ def validate_email(email):
         return False, "Invalid email format"
     return True, "Email is valid"
 
-# Simple user class
-class User(UserMixin):
-    def __init__(self, id, username, email):
-        self.id = id
-        self.username = username
-        self.email = email
-
-# User loader for Flask-Login
-@login_manager.user_loader
-def load_user(user_id):
-    users = load_users()
-    for user in users:
-        if str(user['id']) == str(user_id):
-            return User(str(user['id']), user['username'], user['email'])
-    return None
-
-# Registration route with enhanced security and notifications
-@app.route('/register', methods=['GET', 'POST'])
-# @limiter.limit("5 per minute") # Removed rate limit
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        
-        # Validate input
-        username_valid, username_msg = validate_username(username)
-        if not username_valid:
-            flash(username_msg, 'error')
-            return redirect(url_for('register'))
-            
-        email_valid, email_msg = validate_email(email)
-        if not email_valid:
-            flash(email_msg, 'error')
-            return redirect(url_for('register'))
-            
-        password_valid, password_msg = validate_password(password)
-        if not password_valid:
-            flash(password_msg, 'error')
-            return redirect(url_for('register'))
-        
-        # Check password confirmation
-        if password != confirm_password:
-            flash('Passwords do not match', 'error')
-            return redirect(url_for('register'))
-        
-        users = load_users()
-        
-        # Check if username or email already exists
-        for user in users:
-            if user['username'] == username:
-                flash('Username already exists', 'error')
-                return redirect(url_for('register'))
-            if user['email'] == email:
-                flash('Email already exists', 'error')
-                return redirect(url_for('register'))
-        
-        # Create new user with additional security measures
-        new_user = {
-            'id': len(users) + 1,
-            'username': username,
-            'email': email,
-            'password': generate_password_hash(password),
-            'created_at': datetime.now().isoformat(),
-            'last_login': None,
-            'failed_login_attempts': 0,
-            'is_active': True,
-            'verification_token': secrets.token_urlsafe(32)
-        }
-        users.append(new_user)
-        save_users(users)
-        
-        # Add notification for new registration
-        notification = add_notification(f"New user registered: {username}", "success")
-        
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('register.html')
-
-# Login route with enhanced security
-@app.route('/login', methods=['GET', 'POST'])
-# @limiter.limit("5 per minute") # Removed rate limit
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        username_or_email = request.form.get('username_or_email')
-        password = request.form.get('password')
-        users = load_users()
-        user_found = None
-        for user in users:
-            if user['username'] == username_or_email or user['email'] == username_or_email:
-                user_found = user
-                break
-
-        if user_found and check_password_hash(user_found['password'], password):
-            # Check for account lockout
-            attempts = load_registration_attempts()
-            user_attempts = attempts.get(str(user_found['id']), {'failed_attempts': 0, 'locked_until': None})
-            if user_attempts['locked_until'] and datetime.fromisoformat(user_attempts['locked_until']) > datetime.now():
-                flash(f'Account locked. Try again after {datetime.fromisoformat(user_attempts["locked_until"]).strftime("%H:%M:%S")}', 'danger')
-                return redirect(url_for('login'))
-
-            user_obj = User(str(user_found['id']), user_found['username'], user_found['email'])
-            login_user(user_obj)
-
-            # Reset failed attempts on successful login
-            if str(user_found['id']) in attempts:
-                attempts[str(user_found['id'])] = {'failed_attempts': 0, 'locked_until': None}
-                save_registration_attempts(attempts)
-
-            # Update last login time
-            user_found['last_login'] = datetime.now().isoformat()
-            save_users(users)
-
-            flash('Login successful!', 'success')  # Flash success message
-            return redirect(url_for('index'))
-        else:
-            # Increment failed attempts
-            user_id = None
-            users = load_users()
-            for user in users:
-                if user['username'] == username_or_email or user['email'] == username_or_email:
-                    user_id = str(user['id'])
-                    break
-
-            if user_id:
-                attempts = load_registration_attempts()
-                user_attempts = attempts.get(user_id, {'failed_attempts': 0, 'locked_until': None})
-                user_attempts['failed_attempts'] += 1
-
-                # Check for lockout threshold
-                if user_attempts['failed_attempts'] >= 5: # Lock after 5 failed attempts
-                    lockout_end_time = datetime.now() + timedelta(minutes=1) # Lock for 1 minute
-                    user_attempts['locked_until'] = lockout_end_time.isoformat()
-                    flash(f'Too many failed login attempts. Account locked. Try again after {lockout_end_time.strftime("%H:%M:%S")}', 'danger')
-                else:
-                    flash('Invalid username/email or password.', 'danger') # Flash danger message
-                attempts[user_id] = user_attempts
-                save_registration_attempts(attempts)
-            else:
-                 flash('Invalid username/email or password.', 'danger') # Flash danger message
-
-            return redirect(url_for('login'))
-
-    return render_template('login.html')
-
-# Logout route
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('You have been logged out.', 'warning') # Flash warning message
-    return redirect(url_for('login'))
-
-# Protect routes that require authentication
 @app.route('/', methods=['GET', 'POST'])
-@login_required
 def index():
-    # Get current user ID
-    user_id = str(current_user.id)
-    
-    # Define the user's upload directory
-    user_upload_dir = os.path.join('static', 'uploads', f'user_{user_id}')
-    
-    # Check if the user's directory exists, if not, return empty lists
+    # No user ID, just use a shared upload directory
+    user_upload_dir = os.path.join('static', 'uploads')
     if not os.path.exists(user_upload_dir):
-        return render_template('Home.html', files=[], date=[])
-    
-    # List directories (representing uploads) within the user's upload directory
-    # Filter out any files directly in the user_upload_dir if necessary
+        return render_template('Home.html', files=[], date=[], brands=[])
     uploaded_dirs = [d for d in os.listdir(user_upload_dir) if os.path.isdir(os.path.join(user_upload_dir, d))]
-    
-    # Sort the directories by date (timestamp) in descending order
     uploaded_dirs.sort(reverse=True)
-    
-    # For displaying purposes, you might want to show a representative file from each upload
-    # For now, let's just pass the directory names and handle file listing in the template or another route
-    
-    # The 'files' variable in Home.html seems to expect a list of file paths.
-    # Let's adapt this to pass the directory names (timestamps) instead, and update Home.html accordingly.
-    # Or, we can get a representative file path (e.g., original.jpg or nobg.png) from each directory.
-    
-    # Let's get the path to the original image in each uploaded directory for display
     files_to_display = []
+    brands = []
     for upload_dir in uploaded_dirs:
         original_img_path = os.path.join(user_upload_dir, upload_dir, 'original.jpg')
         if os.path.exists(original_img_path):
-            files_to_display.append(original_img_path.replace('static/', '')) # Store path relative to static
-            
-    # The date variable seems to be a list of date strings. We can extract dates from the directory names.
+            files_to_display.append(original_img_path.replace('static/', ''))
+            if upload_dir not in brands:
+                brands.append(upload_dir)
     dates_to_display = sorted(list(set(map(lambda x: x.split('_')[0], uploaded_dirs))), reverse=True)
-    
     print("Files to display:", files_to_display)
     print("Dates to display:", dates_to_display)
-    
-    return render_template('Home.html', files=files_to_display, date=dates_to_display)
+    return render_template('Home.html', files=files_to_display, date=dates_to_display, brands=brands)
 
 @app.route('/apply_livery', methods=['POST'])
-@login_required
 def apply_livery():
     # Assuming the car image and livery image filenames are passed in the form
     car_image_filename = request.form.get('car_image_filename')
@@ -390,6 +204,14 @@ def apply_livery():
 
     car_image_path = os.path.join(app.config['UPLOAD_FOLDER'], car_image_filename)
     livery_image_path = os.path.join(app.config['UPLOAD_FOLDER'], livery_image_filename)
+
+    # Error handling for missing files
+    if not os.path.exists(car_image_path):
+        flash(f"Car image not found: {car_image_path}", "error")
+        return redirect(request.referrer or url_for('index'))
+    if not os.path.exists(livery_image_path):
+        flash(f"Livery image not found: {livery_image_path}", "error")
+        return redirect(request.referrer or url_for('index'))
 
     # Open the car image and livery image
     car_image = Image.open(car_image_path).convert("RGBA")
@@ -404,100 +226,67 @@ def apply_livery():
 
     return redirect(url_for('car', filename=car_image_filename.split('/')[0]))
 
-
 @app.route('/test', methods=['GET', 'POST'])
 def test():
     return jsonify({"message": 2})
 
-
 @app.route('/upload', methods=['GET', 'POST'])
-@login_required
 def uploadfile():
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
             return redirect('/upload')
-        file = request.files['file']
-        if file.filename == '':
+        files = request.files.getlist('file')
+        if not files or all(f.filename == '' for f in files):
             flash('No image selected for uploading')
             return redirect('/upload')
-        if file and allowed_file(file.filename):
-            try:
-                # Get current user ID
-                user_id = str(current_user.id)
-                
-                # Generate timestamp-based directory name
-                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                
-                # Create user-specific base directory
-                user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], f'user_{user_id}')
-                
-                # Create the timestamp directory within the user's directory
-                base_dir = os.path.join(user_upload_dir, timestamp)
-                
-                # Create necessary directories, including the 'brand' subdirectory
-                os.makedirs(base_dir, exist_ok=True)
-                os.makedirs(os.path.join(base_dir, 'brand'), exist_ok=True)
-
-                # Generate secure filename for the original file
-                original_filename = werkzeug.utils.secure_filename(file.filename)
-                original_path = os.path.join(base_dir, original_filename)
-                
-                # Save original file
-                file.save(original_path)
-                
-                # Process image
+        processed = []
+        for file in files:
+            if file and allowed_file(file.filename):
                 try:
-                    # Remove background
-                    nobg_path = os.path.join(base_dir, 'nobg.png')
-                    remove_car_background(original_path, nobg_path)
-                    
-                    # Read image for model processing
-                    img = cv.imread(original_path)
-                    if img is None:
-                        flash('Error: Could not read the uploaded image file.', 'error')
-                        return redirect('/upload')
-                        
-                    # Run model predictions
-                    xy, _ = usemodel(img.copy(), os.path.join(base_dir, 'brand'))
-                    visualize_model(img, timestamp, model_finetune) # visualize_model uses timestamp for directory name
-                     
-                    # Pass the timestamp (which is now the directory name within the user's folder) to the template
-                    return render_template('upload.html', filename=timestamp, logo=xy['name'])
-                     
+                    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    base_dir = os.path.join(app.config['UPLOAD_FOLDER'], timestamp)
+                    os.makedirs(base_dir, exist_ok=True)
+                    os.makedirs(os.path.join(base_dir, 'brand'), exist_ok=True)
+                    original_filename = werkzeug.utils.secure_filename(file.filename)
+                    original_path = os.path.join(base_dir, original_filename)
+                    file.save(original_path)
+                    try:
+                        nobg_path = os.path.join(base_dir, 'nobg.png')
+                        remove_car_background(original_path, nobg_path)
+                        img = cv.imread(original_path)
+                        if img is None:
+                            flash(f'Error: Could not read the uploaded image file {original_filename}.', 'error')
+                            continue
+                        xy, _ = usemodel(img.copy(), os.path.join(base_dir, 'brand'))
+                        visualize_model(img, timestamp, model_finetune)
+                        processed.append({'timestamp': timestamp, 'logo': xy['name'], 'filename': original_filename})
+                    except Exception as e:
+                        flash(f'Error processing image {original_filename}: {str(e)}', 'error')
+                        continue
                 except Exception as e:
-                    flash(f'Error processing image: {str(e)}', 'error')
-                    # Clean up partially created directory if processing failed
-                    # import shutil # Need to add import for shutil
-                    # if os.path.exists(base_dir): shutil.rmtree(base_dir)
-                    return redirect('/upload')
-                     
-            except Exception as e:
-                flash(f'Error saving file: {str(e)}', 'error')
-                return redirect('/upload')
+                    flash(f'Error saving file {file.filename}: {str(e)}', 'error')
+                    continue
+            else:
+                flash(f'Allowed image types are - png, jpg, jpeg, gif', 'warning')
+        if processed:
+            # Show a summary or redirect to results page
+            return render_template('upload.html', processed=processed)
         else:
-            flash('Allowed image types are - png, jpg, jpeg, gif', 'warning')
-            return redirect('/upload') # Should redirect to upload page after failed upload
+            return redirect('/upload')
     return render_template('upload.html')
 
-
 @app.route('/display/<filename>/<file>')
-@login_required
 def display_image(filename, file):
     path = os.path.join('uploads', filename.split('.')[0], file)
     return redirect(url_for('static', filename=path), code=301)
 
-
 @app.route('/<filename>', methods=['GET', 'POST'])
-@login_required
 def car(filename):
     # filename here is the timestamp directory name
     
-    # Get current user ID
-    user_id = str(current_user.id)
-    
     # Construct the path to the specific upload directory for this user and timestamp
-    upload_dir_path = os.path.join('static', 'uploads', f'user_{user_id}', filename)
+    upload_dir_path = os.path.join('static', 'uploads', filename)
     
     # Check if the directory exists
     if not os.path.exists(upload_dir_path):
@@ -524,9 +313,7 @@ def car(filename):
     # Pass the timestamp as filename and the collected files and data to the template
     return render_template('Car.html', filename=filename, files=files, data=data)
 
-
 @app.route('/clear')
-@login_required
 def clear():
     return jsonify({'status': 'remove all file success.', 'filenames': clear_file()}), 201
 
@@ -542,13 +329,11 @@ def remove_car_background(input_path, output_path):
 
 # Add notification routes
 @app.route('/notifications')
-@login_required
 def get_notifications():
     notifications = load_notifications()
     return jsonify(notifications)
 
 @app.route('/notifications/mark-read/<int:notification_id>', methods=['POST'])
-@login_required
 def mark_notification_read(notification_id):
     notifications = load_notifications()
     for notification in notifications["notifications"]:
@@ -559,12 +344,41 @@ def mark_notification_read(notification_id):
     return jsonify({"status": "success"})
 
 @app.route('/notifications/clear', methods=['POST'])
-@login_required
 def clear_notifications():
     notifications = load_notifications()
     notifications["notifications"] = []
     save_notifications(notifications)
     return jsonify({"status": "success"})
+
+@app.route('/delete_upload/<timestamp>', methods=['POST'])
+def delete_upload(timestamp):
+    base_dir = os.path.join(app.config['UPLOAD_FOLDER'], timestamp)
+    try:
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'status': 'not found'}), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/results')
+def results():
+    user_upload_dir = os.path.join('static', 'uploads')
+    if not os.path.exists(user_upload_dir):
+        return render_template('Home.html', files=[], date=[], brands=[])
+    uploaded_dirs = [d for d in os.listdir(user_upload_dir) if os.path.isdir(os.path.join(user_upload_dir, d))]
+    uploaded_dirs.sort(reverse=True)
+    files_to_display = []
+    brands = []
+    for upload_dir in uploaded_dirs:
+        original_img_path = os.path.join(user_upload_dir, upload_dir, 'original.jpg')
+        if os.path.exists(original_img_path):
+            files_to_display.append(original_img_path.replace('static/', ''))
+            if upload_dir not in brands:
+                brands.append(upload_dir)
+    dates_to_display = sorted(list(set(map(lambda x: x.split('_')[0], uploaded_dirs))), reverse=True)
+    return render_template('Home.html', files=files_to_display, date=dates_to_display, brands=brands)
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0', port=3001)

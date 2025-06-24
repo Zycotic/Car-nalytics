@@ -26,16 +26,8 @@ active {% endblock %} {% block content %} {% if filename %}
 </h4>
 <div class="row mt-4 justify-content-center">
   <form action="{{ url_for('apply_livery') }}" method="post">
-    <input
-      type="hidden"
-      name="car_image_filename"
-      value="2025-02-11_185638/original.jpg"
-    />
-    <input
-      type="hidden"
-      name="livery_image_filename"
-      value="2025-02-11_185638/logo.jpg"
-    />
+    <input type="hidden" name="car_image_filename" value="{{ filename }}/original.jpg" />
+    <input type="hidden" name="livery_image_filename" value="{{ filename }}/logo.jpg" />
     <button type="submit" class="btn btn-primary">Apply Livery</button>
   </form>
   {% for i in ['logo'] %}
