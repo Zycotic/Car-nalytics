@@ -1,3 +1,26 @@
+<style>
+body, .main-content, .container-fluid {
+  background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%) !important;
+}
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2000;
+}
+#spinner-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(255,255,255,0.7);
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+}
+#spinner-overlay .spinner-border {
+  width: 4rem; height: 4rem;
+}
+</style>
 {% extends 'template.html' %} {% block breadcrumb %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
@@ -12,6 +35,7 @@
 </nav>
 {% endblock %} {% block title %} Upload {% endblock %} {% block page2 %} active
 {% endblock %} {% block content %}
+<div class="toast-container" id="toast-container"></div>
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
@@ -43,107 +67,47 @@
     </div>
   </div>
 </div>
-<script>
-// Drag & Drop logic
-const dropArea = document.getElementById('drop-area');
-const fileInput = document.getElementById('file');
-const preview = document.getElementById('preview');
-const form = document.getElementById('uploadForm');
-const progressBar = document.getElementById('progressBar');
-const progressBarContainer = document.getElementById('progressBarContainer');
-const errorMsg = document.getElementById('errorMsg');
-
-dropArea.addEventListener('click', () => fileInput.click());
-dropArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropArea.classList.add('bg-primary', 'text-white');
-});
-dropArea.addEventListener('dragleave', (e) => {
-  e.preventDefault();
-  dropArea.classList.remove('bg-primary', 'text-white');
-});
-dropArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropArea.classList.remove('bg-primary', 'text-white');
-  if (e.dataTransfer.files.length) {
-    fileInput.files = e.dataTransfer.files;
-    showPreview(e.dataTransfer.files);
-  }
-});
-fileInput.addEventListener('change', (e) => {
-  if (fileInput.files.length) {
-    showPreview(fileInput.files);
-  }
-});
-function showPreview(files) {
-  preview.innerHTML = '';
-  Array.from(files).forEach(file => {
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        img.className = 'img-fluid rounded shadow m-1';
-        img.style.maxHeight = '120px';
-        preview.appendChild(img);
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('uploadForm');
-  const progressBarContainer = document.getElementById('progressBarContainer');
-  const progressBar = document.getElementById('progressBar');
-  const errorMsg = document.getElementById('errorMsg');
-
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(form);
-    const xhr = new XMLHttpRequest();
-
-    progressBarContainer.classList.remove('d-none');
-    progressBar.style.width = '0%';
-    progressBar.innerText = '0%';
-    errorMsg.classList.add('d-none');
-    errorMsg.innerText = '';
-
-    xhr.upload.addEventListener('progress', function(e) {
-      if (e.lengthComputable) {
-        const percent = Math.round((e.loaded / e.total) * 100);
-        progressBar.style.width = percent + '%';
-        progressBar.innerText = percent + '%';
-      }
-    });
-
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === XMLHttpRequest.DONE) {
-        if (xhr.status === 200) {
-          // Success: redirect to result/details page
-          window.location.href = xhr.responseURL;
-        } else {
-          // Error: show message
-          progressBarContainer.classList.add('d-none');
-          errorMsg.classList.remove('d-none');
-          errorMsg.innerText = xhr.responseText || 'Upload failed. Please try again.';
-        }
-      }
-    };
-
-    xhr.open('POST', form.action);
-    xhr.send(formData);
-  });
-});
-</script>
 {% if filename %}
 <div class="row mt-4">
   <h4>
     Result : {% if logo %} Car brand
     <span class="badge bg-primary">{{logo}}</span> {% endif %}
   </h4>
-  {% for i in ['Logo','Original','Sementic','Mask'] %}
+  <div class="col-md-6 mt-4">
+    <div class="card">
+      <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
+        <div style="position: relative; width: 100%; text-align: center;">
+          <div id="slider-container" style="position:relative; width:100%;">
+            <img id="original-img" src="{{ url_for('static', filename='uploads/' + filename + '/Original.jpg') }}" style="width:100%; display:block;">
+            <img id="overlay-img" src="{{ url_for('static', filename='uploads/' + filename + '/Sementic.jpg') }}" style="width:100%; position:absolute; top:0; left:0; opacity:0.5; pointer-events:none;">
+            <input type="range" min="0" max="100" value="50" id="opacity-slider" class="form-range mt-2" oninput="document.getElementById('overlay-img').style.opacity = this.value/100;">
+          </div>
+        </div>
+        <div class="mt-2">
+          <strong>Parts:</strong>
+          <div id="part-legend" class="d-flex flex-wrap gap-2 mt-1">
+            {% set part_names = ['back_bumper','back_glass','back_left_door','back_left_light','back_right_door','back_right_light','front_bumper','front_glass','front_left_door','front_left_light','front_right_door','front_right_light','hood','left_mirror','right_mirror','tailgate','trunk','wheel'] %}
+            {% for part in part_names %}
+              <span class="badge" style="background: rgb({{palette[loop.index][0]}},{{palette[loop.index][1]}},{{palette[loop.index][2]}}); cursor:pointer;" onclick="highlightPart({{loop.index}})">{{part.replace('_',' ')|capitalize}}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="card-body pt-2">
+        <span
+          class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2"
+          >{{filename}}</span
+        >
+        <a href="javascript:;" class="card-title h5 d-block text-darker">Segmentation</a>
+        <a href="{{ url_for('static', filename='uploads/' + filename + '/Sementic.jpg') }}"
+           download="Sementic_{{ filename }}.jpg"
+           class="btn btn-outline-success btn-sm mt-2">
+          Download
+        </a>
+      </div>
+    </div>
+  </div>
+  {% for i in ['Logo','Original','Mask'] %}
   <div class="col-md-3 mt-4">
     <div class="card">
       <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
@@ -209,49 +173,113 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 {% endif %}
 <script>
-let highlightedPart = null;
-function highlightPart(partIdx) {
-  const overlay = document.getElementById('overlay-img') || document.getElementById('car-overlay-img');
-  if (!overlay) return;
-  if (highlightedPart === partIdx) {
-    overlay.src = overlay.dataset.fullsrc;
-    highlightedPart = null;
-    return;
-  }
-  const filename = overlay.dataset.filename;
-  const partNames = ['back_bumper','back_glass','back_left_door','back_left_light','back_right_door','back_right_light','front_bumper','front_glass','front_left_door','front_left_light','front_right_door','front_right_light','hood','left_mirror','right_mirror','tailgate','trunk','wheel'];
-  const partFile = partNames[partIdx-1] + '.png';
-  overlay.src = `/static/uploads/${filename}/${partFile}`;
-  highlightedPart = partIdx;
+// Toast notification function
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast align-items-center text-bg-${type} border-0 mb-2 show`;
+  toast.setAttribute('role', 'alert');
+  toast.innerHTML = `<div class=\"d-flex\"><div class=\"toast-body\">${message}</div><button type=\"button\" class=\"btn-close btn-close-white me-2 m-auto\" data-bs-dismiss=\"toast\" aria-label=\"Close\"></button></div>`;
+  document.getElementById('toast-container').appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 }
-window.addEventListener('DOMContentLoaded', function() {
-  const overlay = document.getElementById('overlay-img') || document.getElementById('car-overlay-img');
-  if (overlay) {
-    overlay.dataset.fullsrc = overlay.src;
-    overlay.dataset.filename = "{{filename}}";
+// Drag & Drop logic
+const dropArea = document.getElementById('drop-area');
+const fileInput = document.getElementById('file');
+const preview = document.getElementById('preview');
+const form = document.getElementById('uploadForm');
+const progressBar = document.getElementById('progressBar');
+const progressBarContainer = document.getElementById('progressBarContainer');
+const errorMsg = document.getElementById('errorMsg');
+
+dropArea.addEventListener('click', () => fileInput.click());
+dropArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropArea.classList.add('bg-primary', 'text-white');
+});
+dropArea.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dropArea.classList.remove('bg-primary', 'text-white');
+});
+dropArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropArea.classList.remove('bg-primary', 'text-white');
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    showPreview(e.dataTransfer.files);
   }
 });
-</script>
-{% endblock %} {% block js %}
-<script type="text/javascript">
-  function loading() {
-    document.getElementById("sub").style.display = "none";
-    document.getElementById("loading").style.display = "block";
+fileInput.addEventListener('change', (e) => {
+  if (fileInput.files.length) {
+    showPreview(fileInput.files);
   }
+});
+function showPreview(files) {
+  preview.innerHTML = '';
+  Array.from(files).forEach(file => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'img-fluid rounded shadow m-1';
+        img.style.maxHeight = '120px';
+        preview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('uploadForm');
+  const progressBarContainer = document.getElementById('progressBarContainer');
+  const progressBar = document.getElementById('progressBar');
+  const errorMsg = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const xhr = new XMLHttpRequest();
+
+    if (!progressBarContainer || !progressBar) {
+      showToast('Upload error: Progress bar missing from page. Please contact support.', 'danger');
+      return;
+    }
+    progressBarContainer.classList.remove('d-none');
+    progressBar.style.width = '0%';
+    progressBar.innerText = '0%';
+    if (errorMsg) {
+      errorMsg.classList.add('d-none');
+      errorMsg.innerText = '';
+    }
+
+    xhr.upload.addEventListener('progress', function(e) {
+      if (e.lengthComputable && progressBar) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        progressBar.style.width = percent + '%';
+        progressBar.innerText = percent + '%';
+      }
+    });
+
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        if (xhr.status === 200) {
+          showToast('Upload successful!', 'success');
+          window.location.href = xhr.responseURL;
+        } else {
+          if (progressBarContainer) progressBarContainer.classList.add('d-none');
+          showToast('Upload failed. Please try again.', 'danger');
+          if (errorMsg) {
+            errorMsg.classList.remove('d-none');
+            errorMsg.innerText = xhr.responseText || 'Upload failed. Please try again.';
+          }
+        }
+      }
+    };
+
+    xhr.open('POST', form.action);
+    xhr.send(formData);
+  });
+});
 </script>
-{% endblock %} {% block toasts %}
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="toast align-items-center text-bg-{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'info' }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
-          <div class="d-flex">
-            <div class="toast-body">
-              {{ message }}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-          </div>
-        </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
 {% endblock %}

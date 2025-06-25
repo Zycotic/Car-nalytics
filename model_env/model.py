@@ -103,21 +103,17 @@ def visualize_model(image, filename: str, model_finetune):
                                                  align_corners=False)
     seg = upsampled_logits.argmax(dim=1)[0]
     color_seg = np.zeros((seg.shape[0], seg.shape[1], 3), dtype=np.uint8)
-    # list_prediction = [classes[idx] for idx in np.unique(seg.cpu().numpy())]
     list_prediction = {idx: classes[idx] for idx in np.unique(seg.cpu().numpy())}
 
     print(seg.shape)
-    # list_label = [classes[idx] for idx in label]
-    print("Predction : ", list_prediction)
-    # for id, label in enumerate(list_prediction):
-    #     part_mark = np.zeros(image.shape[:2], dtype=np.uint8)
-    #     part_mark[seg.cpu() == id] = 255
-    #     cv2.imwrite(os.path.join('static', 'uploads', filename[0], str(label) + filename[-1]), part_mark)
+    print("Prediction : ", list_prediction)
+
+    output_dir = os.path.join('static', 'uploads', filename[0])
+    os.makedirs(output_dir, exist_ok=True)
 
     for label, color in enumerate(palette):
         color_seg[seg.cpu() == label, :] = color
 
-    # color_seg = color_seg[..., ::-1]
     img_sementice = np.array(image) * 0.5 + color_seg * 0.5
     img_sementice = img_sementice.astype(np.uint8)
 
@@ -127,15 +123,18 @@ def visualize_model(image, filename: str, model_finetune):
         part = np.uint8(part)
         alpha = np.where(np.array(seg) == i, 255, 0)
 
-        part = cv2.bitwise_and(image, image, mask=part)
-        part = cv2.cvtColor(part, cv2.COLOR_RGB2RGBA)
-        part[:, :, 3] = alpha
-        cv2.imwrite(os.path.join('static', 'uploads', filename[0], classes[i] + '.png'), part)
+        part_img = cv2.bitwise_and(image, image, mask=part)
+        part_img = cv2.cvtColor(part_img, cv2.COLOR_RGB2RGBA)
+        part_img[:, :, 3] = alpha
+        part_path = os.path.join(output_dir, classes[i] + '.png')
+        print(f"[visualize_model] Saving part: {classes[i]} to {part_path}")
+        cv2.imwrite(part_path, part_img)
 
-    cv2.imwrite(os.path.join('static', 'uploads', filename[0], 'output.jpg'), np.array(seg))
-    cv2.imwrite(os.path.join('static', 'uploads', filename[0], 'original.jpg'), image)
-    cv2.imwrite(os.path.join('static', 'uploads', filename[0], 'sementic.jpg'), img_sementice)
-    cv2.imwrite(os.path.join('static', 'uploads', filename[0], 'mask.jpg'), color_seg)
+    cv2.imwrite(os.path.join(output_dir, 'output.jpg'), np.array(seg))
+    cv2.imwrite(os.path.join(output_dir, 'original.jpg'), image)
+    cv2.imwrite(os.path.join(output_dir, 'sementic.jpg'), img_sementice)
+    cv2.imwrite(os.path.join(output_dir, 'mask.jpg'), color_seg)
+    print(f"[visualize_model] Saved original, sementic, and mask images to {output_dir}")
 
 
 

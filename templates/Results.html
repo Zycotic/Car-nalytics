@@ -1,0 +1,384 @@
+{% extends "template.html" %}
+
+{% block content %}
+<style>
+body, .main-content, .container-fluid {
+  background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%) !important;
+}
+.card.bg-gradient-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #000000 100%) !important;
+  color: #fff !important;
+}
+.btn-modern-download {
+  background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+  color: #fff !important;
+  border: none;
+  border-radius: 2rem;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(52,211,153,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-modern-download:hover {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  box-shadow: 0 4px 16px rgba(52,211,153,0.16);
+}
+.btn-modern-delete {
+  background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+  color: #fff !important;
+  border: none;
+  border-radius: 2rem;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(239,68,68,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-modern-delete:hover {
+  background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+  box-shadow: 0 4px 16px rgba(239,68,68,0.16);
+}
+#partModal .modal-dialog {
+  max-width: 500px;
+}
+#partModal .modal-body {
+  text-align: center;
+}
+.slider-container {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto 1rem auto;
+}
+.slider-container img {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+}
+.slider-container .slider-img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.slider-container input[type=range] {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.segmentation-viewer {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.segmentation-canvas {
+  max-width: 350px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  margin-bottom: 1rem;
+}
+.part-badge {
+  cursor: pointer;
+  margin: 0.2rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 1rem;
+  font-size: 0.95em;
+  border: 1px solid #ddd;
+  background: #f3f4f6;
+  color: #222;
+  transition: background 0.2s, color 0.2s;
+}
+.part-badge.active, .part-badge:hover {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+</style>
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+      <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search by filename..." style="max-width:200px;">
+      <select id="brandFilter" class="form-select form-select-sm" style="max-width:180px;">
+        <option value="">All Brands</option>
+        {% for brand in brands %}
+          <option value="{{ brand }}">{{ brand }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" id="dateFilter" class="form-control form-control-sm" style="max-width:160px;">
+      <select id="sortSelect" class="form-select form-select-sm" style="max-width:160px;">
+        <option value="date_desc">Newest First</option>
+        <option value="date_asc">Oldest First</option>
+        <option value="brand_asc">Brand A-Z</option>
+        <option value="brand_desc">Brand Z-A</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card mb-4">
+        <div class="card-header pb-0">
+          <h6>Processing Results</h6>
+          <p class="text-sm mb-0">
+            <i class="fa fa-check text-info" aria-hidden="true"></i>
+            <span class="font-weight-bold">All processed images and segmentation results</span>
+          </p>
+        </div>
+        <div class="card-body px-0 pt-0 pb-2">
+          {% if results %}
+            {% for result in results %}
+            <div class="card mb-4 mx-4">
+              <div class="card-header">
+                <h6 class="mb-0">Upload: {{ result.timestamp }}</h6>
+                <p class="text-sm text-secondary mb-0">Date: {{ result.date }}</p>
+              </div>
+              <div class="card-body">
+                <!-- Interactive Segmentation Viewer -->
+                {% if result.images.original and result.images.semantic %}
+                <div class="segmentation-viewer mb-4">
+                  <canvas class="segmentation-canvas" id="segCanvas-{{ loop.index }}"></canvas>
+                  <div class="d-flex flex-wrap justify-content-center">
+                    {% set part_names = ['back_bumper','back_glass','back_left_door','back_left_light','back_right_door','back_right_light','front_bumper','front_glass','front_left_door','front_left_light','front_right_door','front_right_light','hood','left_mirror','right_mirror','tailgate','trunk','wheel'] %}
+                    {% for part in part_names %}
+                      <span class="part-badge" onclick="highlightSegPart('{{ loop.index }}', {{ loop.index0 }})">{{ part.replace('_',' ')|capitalize }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="text-muted mt-2" style="font-size:0.95em;">Click a part to highlight it on the segmentation mask.</div>
+                  <img src="{{ url_for('static', filename=result.images.original) }}" id="origImg-{{ loop.index }}" style="display:none;">
+                  <img src="{{ url_for('static', filename=result.images.semantic) }}" id="semImg-{{ loop.index }}" style="display:none;">
+                </div>
+                {% endif %}
+                <div class="row">
+                  <!-- Before/After Slider for Segmentation -->
+                  {% if result.images.original and result.images.semantic %}
+                  <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                      <div class="card-header p-2">
+                        <h6 class="mb-0 text-center">Segmentation Comparison</h6>
+                      </div>
+                      <div class="card-body p-2">
+                        <div class="slider-container">
+                          <img src="{{ url_for('static', filename=result.images.original) }}" alt="Original" id="original-{{ loop.index }}">
+                          <img src="{{ url_for('static', filename=result.images.semantic) }}" alt="Segmentation" class="slider-img" id="seg-{{ loop.index }}" style="opacity:0.5;">
+                          <input type="range" min="0" max="100" value="50" id="slider-{{ loop.index }}" oninput="document.getElementById('seg-{{ loop.index }}').style.opacity = this.value/100;">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Original Image (if not shown above) -->
+                  {% if result.images.original and not result.images.semantic %}
+                  <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card">
+                      <div class="card-header p-2">
+                        <h6 class="mb-0 text-center">Original Image</h6>
+                      </div>
+                      <div class="card-body p-2">
+                        <img src="{{ url_for('static', filename=result.images.original) }}" class="img-fluid rounded" alt="Original Image">
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Semantic Segmentation (if not shown above) -->
+                  {% if result.images.semantic and not result.images.original %}
+                  <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card">
+                      <div class="card-header p-2">
+                        <h6 class="mb-0 text-center">Semantic Segmentation</h6>
+                      </div>
+                      <div class="card-body p-2">
+                        <img src="{{ url_for('static', filename=result.images.semantic) }}" class="img-fluid rounded" alt="Semantic Segmentation">
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Background Removed -->
+                  {% if result.images.nobg %}
+                  <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card">
+                      <div class="card-header p-2">
+                        <h6 class="mb-0 text-center">Background Removed</h6>
+                      </div>
+                      <div class="card-body p-2">
+                        <img src="{{ url_for('static', filename=result.images.nobg) }}" class="img-fluid rounded" alt="Background Removed">
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Segmentation Mask -->
+                  {% if result.images.mask %}
+                  <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card">
+                      <div class="card-header p-2">
+                        <h6 class="mb-0 text-center">Segmentation Mask</h6>
+                      </div>
+                      <div class="card-body p-2">
+                        <img src="{{ url_for('static', filename=result.images.mask) }}" class="img-fluid rounded" alt="Segmentation Mask">
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Brand Logo -->
+                  {% if result.images.brand %}
+                  <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card">
+                      <div class="card-header p-2">
+                        <h6 class="mb-0 text-center">Detected Brand</h6>
+                      </div>
+                      <div class="card-body p-2">
+                        <img src="{{ url_for('static', filename=result.images.brand) }}" class="img-fluid rounded" alt="Brand Logo">
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <!-- Individual Car Parts -->
+                {% if result.images.parts %}
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <h6 class="mb-3">Parts</h6>
+                    <div class="row">
+                      {% for part in result.images.parts %}
+                      <div class="col-md-3 col-lg-2 mb-3">
+                        <div class="card part-card" style="cursor:pointer;" data-partname="{{ part.split('/')[-1].split('.')[0]|title }}" data-partimg="{{ url_for('static', filename=part) }}" onclick="showPartModal(this)">
+                          <div class="card-body p-2 text-center">
+                            <img src="{{ url_for('static', filename=part) }}" class="img-fluid rounded mb-2" alt="Car Part" style="max-height:80px;object-fit:contain;">
+                            <div class="small text-muted">{{ part.split('/')[-1].split('.')[0] | title }}</div>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="row mt-3">
+                  <div class="col-12 text-center">
+                    <a href="{{ url_for('car', filename=result.timestamp) }}" class="btn btn-primary btn-sm">
+                      <i class="fa fa-eye me-2"></i>View Details
+                    </a>
+                    <button class="btn btn-danger btn-sm ms-2" onclick="deleteUpload('{{ result.timestamp }}')">
+                      <i class="fa fa-trash me-2"></i>Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-5">
+              <i class="fa fa-image fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No results found</h5>
+              <p class="text-muted">Upload some images to see processing results here.</p>
+              <a href="{{ url_for('uploadfile') }}" class="btn btn-primary">
+                <i class="fa fa-upload me-2"></i>Upload Images
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Car Part -->
+<div class="modal fade" id="partModal" tabindex="-1" aria-labelledby="partModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="partModalLabel">Car Part</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <img id="partModalImg" src="" alt="Car Part" class="img-fluid rounded mb-3" style="max-height:300px;">
+        <h6 id="partModalName"></h6>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Interactive Segmentation Viewer
+const partColors = [
+  [0,0,0], // background
+  [255,0,0], [255,128,0], [255,255,0], [128,255,0], [0,255,0], [0,255,128], [0,255,255], [0,128,255], [0,0,255], [128,0,255], [255,0,255], [255,0,128], [128,128,128], [128,0,0], [0,128,0], [0,0,128], [128,128,0], [0,128,128]
+];
+function highlightSegPart(idx, partIdx) {
+  // idx: loop.index (1-based)
+  // partIdx: index in part_names
+  const canvas = document.getElementById('segCanvas-' + idx);
+  const origImg = document.getElementById('origImg-' + idx);
+  const semImg = document.getElementById('semImg-' + idx);
+  if (!canvas || !origImg || !semImg) return;
+  const ctx = canvas.getContext('2d');
+  // Clear canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Draw segmentation mask, highlight selected part, dim others
+  canvas.width = semImg.naturalWidth;
+  canvas.height = semImg.naturalHeight;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = semImg.naturalWidth;
+  tempCanvas.height = semImg.naturalHeight;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(semImg, 0, 0, tempCanvas.width, tempCanvas.height);
+  const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+  const data = imgData.data;
+  // Highlight selected part, dim others
+  const [r, g, b] = partColors[partIdx+1];
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === r && data[i+1] === g && data[i+2] === b) {
+      // keep color, fully opaque
+      data[i+3] = 255;
+    } else {
+      // grayscale and semi-transparent
+      const avg = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+      data[i] = avg; data[i+1] = avg; data[i+2] = avg; data[i+3] = 100;
+    }
+  }
+  tempCtx.putImageData(imgData, 0, 0);
+  ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+  // Highlight badge
+  document.querySelectorAll('.part-badge').forEach(b => b.classList.remove('active'));
+  const badges = document.querySelectorAll('.segmentation-viewer .part-badge');
+  if (badges[partIdx]) badges[partIdx].classList.add('active');
+}
+// Filtering and sorting logic remains unchanged
+function showPartModal(element) {
+  var partName = element.getAttribute('data-partname');
+  var partImg = element.getAttribute('data-partimg');
+  document.getElementById('partModalLabel').innerText = partName;
+  document.getElementById('partModalImg').src = partImg;
+  document.getElementById('partModalName').innerText = partName;
+  var modal = new bootstrap.Modal(document.getElementById('partModal'));
+  modal.show();
+}
+function deleteUpload(timestamp) {
+  if (confirm('Are you sure you want to delete this upload and all its results?')) {
+    fetch(`/delete_upload/${timestamp}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        location.reload();
+      } else {
+        alert('Error deleting upload: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error deleting upload');
+    });
+  }
+}
+</script>
+{% endblock %} 
