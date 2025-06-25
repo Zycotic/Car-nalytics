@@ -18,7 +18,7 @@
       <div class="card shadow border-0">
         <div class="card-body p-4">
           <h3 class="mb-3 text-center">Upload a Car Image</h3>
-          <form id="uploadForm" method="POST" action="" enctype="multipart/form-data">
+          <form id="uploadForm" method="post" enctype="multipart/form-data">
             <div class="mb-3">
               <label for="file" class="form-label">Choose an image or drag & drop below</label>
               <div id="drop-area" class="border border-2 border-primary rounded-3 p-4 text-center bg-light" style="cursor:pointer;">
@@ -29,10 +29,11 @@
               </div>
             </div>
             <div class="mb-3">
-              <div class="progress d-none" id="progressBarContainer">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: 0%"></div>
+              <div id="progressBarContainer" class="progress my-3 d-none">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
               </div>
             </div>
+            <div id="errorMsg" class="alert alert-danger d-none"></div>
             <div class="d-grid">
               <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-upload me-2"></i>Upload</button>
             </div>
@@ -50,6 +51,7 @@ const preview = document.getElementById('preview');
 const form = document.getElementById('uploadForm');
 const progressBar = document.getElementById('progressBar');
 const progressBarContainer = document.getElementById('progressBarContainer');
+const errorMsg = document.getElementById('errorMsg');
 
 dropArea.addEventListener('click', () => fileInput.click());
 dropArea.addEventListener('dragover', (e) => {
@@ -89,23 +91,50 @@ function showPreview(files) {
     }
   });
 }
-// Progress bar simulation for multiple files
-form.addEventListener('submit', function(e) {
-  if (fileInput.files.length) {
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('uploadForm');
+  const progressBarContainer = document.getElementById('progressBarContainer');
+  const progressBar = document.getElementById('progressBar');
+  const errorMsg = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const xhr = new XMLHttpRequest();
+
     progressBarContainer.classList.remove('d-none');
-    let width = 0;
     progressBar.style.width = '0%';
     progressBar.innerText = '0%';
-    const interval = setInterval(() => {
-      if (width >= 100) {
-        clearInterval(interval);
-      } else {
-        width += 10;
-        progressBar.style.width = width + '%';
-        progressBar.innerText = width + '%';
+    errorMsg.classList.add('d-none');
+    errorMsg.innerText = '';
+
+    xhr.upload.addEventListener('progress', function(e) {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        progressBar.style.width = percent + '%';
+        progressBar.innerText = percent + '%';
       }
-    }, 100);
-  }
+    });
+
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        if (xhr.status === 200) {
+          // Success: redirect to result/details page
+          window.location.href = xhr.responseURL;
+        } else {
+          // Error: show message
+          progressBarContainer.classList.add('d-none');
+          errorMsg.classList.remove('d-none');
+          errorMsg.innerText = xhr.responseText || 'Upload failed. Please try again.';
+        }
+      }
+    };
+
+    xhr.open('POST', form.action);
+    xhr.send(formData);
+  });
 });
 </script>
 {% if filename %}
@@ -118,17 +147,24 @@ form.addEventListener('submit', function(e) {
   <div class="col-md-3 mt-4">
     <div class="card">
       <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
-        <a
-          href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
-          class="d-block"
-        >
-          <img
-            src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
-            class="img-fluid border-radius-lg"
-          />
-        </a>
+        {% if i == 'Sementic' %}
+        <div style="position: relative; width: 100%; text-align: center;">
+          <img id="original-img" src="{{ url_for('static', filename='uploads/' + filename + '/Original.jpg') }}" style="width:100%; display:block;">
+          <img id="overlay-img" src="{{ url_for('static', filename='uploads/' + filename + '/Sementic.jpg') }}" style="width:100%; position:absolute; top:0; left:0; opacity:0.5; pointer-events:none;">
+        </div>
+        <input type="range" min="0" max="100" value="50" id="opacity-slider" class="form-range mt-2" oninput="document.getElementById('overlay-img').style.opacity = this.value/100;">
+        <div class="mt-2">
+          <strong>Parts:</strong>
+          <div id="part-legend" class="d-flex flex-wrap gap-2 mt-1">
+            {% for idx, part in enumerate(['back_bumper','back_glass','back_left_door','back_left_light','back_right_door','back_right_light','front_bumper','front_glass','front_left_door','front_left_light','front_right_door','front_right_light','hood','left_mirror','right_mirror','tailgate','trunk','wheel']) %}
+              <span class="badge" style="background: rgb({{palette[idx+1][0]}},{{palette[idx+1][1]}},{{palette[idx+1][2]}}); cursor:pointer;" onclick="highlightPart({{idx+1}})">{{part.replace('_',' ').capitalize()}}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <img src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}" class="img-fluid border-radius-lg" />
+        {% endif %}
       </div>
-
       <div class="card-body pt-2">
         <span
           class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2"
@@ -136,6 +172,11 @@ form.addEventListener('submit', function(e) {
         >
         <a href="javascript:;" class="card-title h5 d-block text-darker">
           {{i}}
+        </a>
+        <a href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+           download="{{ i }}_{{ filename }}.jpg"
+           class="btn btn-outline-success btn-sm mt-2">
+          Download
         </a>
       </div>
     </div>
@@ -166,7 +207,32 @@ form.addEventListener('submit', function(e) {
   </div>
   {% endfor %}
 </div>
-{% endif %} {% endblock %} {% block js %}
+{% endif %}
+<script>
+let highlightedPart = null;
+function highlightPart(partIdx) {
+  const overlay = document.getElementById('overlay-img') || document.getElementById('car-overlay-img');
+  if (!overlay) return;
+  if (highlightedPart === partIdx) {
+    overlay.src = overlay.dataset.fullsrc;
+    highlightedPart = null;
+    return;
+  }
+  const filename = overlay.dataset.filename;
+  const partNames = ['back_bumper','back_glass','back_left_door','back_left_light','back_right_door','back_right_light','front_bumper','front_glass','front_left_door','front_left_light','front_right_door','front_right_light','hood','left_mirror','right_mirror','tailgate','trunk','wheel'];
+  const partFile = partNames[partIdx-1] + '.png';
+  overlay.src = `/static/uploads/${filename}/${partFile}`;
+  highlightedPart = partIdx;
+}
+window.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.getElementById('overlay-img') || document.getElementById('car-overlay-img');
+  if (overlay) {
+    overlay.dataset.fullsrc = overlay.src;
+    overlay.dataset.filename = "{{filename}}";
+  }
+});
+</script>
+{% endblock %} {% block js %}
 <script type="text/javascript">
   function loading() {
     document.getElementById("sub").style.display = "none";

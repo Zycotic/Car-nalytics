@@ -205,4 +205,30 @@ active {% endblock %} {% block content %} {% if filename %}
     </div>
   </div>
 </div>
-{% endif %} {% endblock %}
+{% endif %}
+
+<script>
+let highlightedPart = null;
+function highlightPart(partIdx) {
+  const overlay = document.getElementById('overlay-img') || document.getElementById('car-overlay-img');
+  if (!overlay) return;
+  if (highlightedPart === partIdx) {
+    overlay.src = overlay.dataset.fullsrc;
+    highlightedPart = null;
+    return;
+  }
+  const filename = overlay.dataset.filename;
+  const partNames = ['back_bumper','back_glass','back_left_door','back_left_light','back_right_door','back_right_light','front_bumper','front_glass','front_left_door','front_left_light','front_right_door','front_right_light','hood','left_mirror','right_mirror','tailgate','trunk','wheel'];
+  const partFile = partNames[partIdx-1] + '.png';
+  overlay.src = `/static/uploads/${filename}/${partFile}`;
+  highlightedPart = partIdx;
+}
+window.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.getElementById('overlay-img') || document.getElementById('car-overlay-img');
+  if (overlay) {
+    overlay.dataset.fullsrc = overlay.src;
+    overlay.dataset.filename = "{{filename}}";
+  }
+});
+</script>
+{% endblock %}

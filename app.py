@@ -270,8 +270,8 @@ def uploadfile():
             else:
                 flash(f'Allowed image types are - png, jpg, jpeg, gif', 'warning')
         if processed:
-            # Show a summary or redirect to results page
-            return render_template('upload.html', processed=processed)
+            # Redirect to the result/details page for the first processed image
+            return redirect(url_for('car', filename=processed[0]['timestamp']))
         else:
             return redirect('/upload')
     return render_template('upload.html')
