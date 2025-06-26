@@ -23,6 +23,15 @@ import uuid
 import logging
 import shutil
 
+# Firebase integration
+try:
+    from firebase_config import save_user_to_firebase, get_user_from_firebase, get_all_users_from_firebase, update_user_in_firebase, delete_user_from_firebase
+    FIREBASE_AVAILABLE = True
+    print("Firebase integration enabled")
+except ImportError as e:
+    FIREBASE_AVAILABLE = False
+    print(f"Firebase integration disabled: {str(e)}")
+
 app = Flask(__name__)
 CORS(app)
 
@@ -56,10 +65,23 @@ NOTIFICATIONS_FILE = 'notifications.json'
 
 def load_users():
     users = []
-    # Try loading from Excel first
+    
+    # Try loading from Firebase first if available
+    if FIREBASE_AVAILABLE:
+        try:
+            firebase_users = get_all_users_from_firebase()
+            if firebase_users:
+                users = firebase_users
+                print(f"Loaded {len(users)} users from Firebase")
+                return users
+        except Exception as e:
+            print(f"Error loading users from Firebase: {str(e)}")
+    
+    # Try loading from Excel
     if os.path.exists(USERS_EXCEL):
         try:
             users = pd.read_excel(USERS_EXCEL).to_dict('records')
+            print(f"Loaded {len(users)} users from Excel")
         except Exception as e:
             print(f"Error loading users from Excel: {str(e)}")
     
@@ -71,6 +93,7 @@ def load_users():
                 for user_id, user_data in json_users.items():
                     user_data['id'] = int(user_id)
                     users.append(user_data)
+            print(f"Loaded {len(users)} users from JSON")
         except Exception as e:
             print(f"Error loading users from JSON: {str(e)}")
     
@@ -99,6 +122,12 @@ def save_users(users):
         
         with open('users.json', 'w') as f:
             json.dump(formatted_users, f, indent=4)
+        
+        # Save to Firebase if available
+        if FIREBASE_AVAILABLE:
+            for user in users:
+                save_user_to_firebase(user)
+                print(f"User {user['username']} saved to Firebase")
     except Exception as e:
         print(f"Error saving users: {str(e)}")
 
@@ -484,7 +513,7 @@ def register():
             'id': user_id,
             'username': username,
             'email': email,
-            'password': generate_password_hash(password),
+            'password': password,  # Store password in plain text (INSECURE - for testing only)
             'created_at': datetime.now().isoformat(),
             'last_login': '',
             'failed_login_attempts': 0,
@@ -504,7 +533,7 @@ def login():
         password = request.form['password']
         users = load_users()
         user = next((u for u in users if u['username'] == username_or_email or u['email'] == username_or_email), None)
-        if user and check_password_hash(user['password'], password):
+        if user and user['password'] == password:  # Compare plain text passwords (INSECURE - for testing only)
             session['user_id'] = user['id']
             session['username'] = user['username']
             flash('Login successful!', 'success')
@@ -538,6 +567,9 @@ def delete_my_data():
     users = load_users()
     users = [u for u in users if u['id'] != user_id]
     save_users(users)
+    # Delete from Firebase if available
+    if FIREBASE_AVAILABLE:
+        delete_user_from_firebase(user_id)
     session.clear()
     flash('Your account and all your data have been deleted.', 'success')
     return redirect(url_for('register'))
