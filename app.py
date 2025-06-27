@@ -22,6 +22,8 @@ from flask_mail import Mail, Message
 import uuid
 import logging
 import shutil
+from gen import generate_image, upload_to_imgbb
+from configs import IMGBB_API_KEY
 
 # Firebase integration
 try:
@@ -220,9 +222,11 @@ def index():
     for upload_dir in uploaded_dirs:
         upload_path = os.path.join(user_upload_dir, upload_dir)
         image_files = [f for f in os.listdir(upload_path) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        # Fix: Use forward slashes for URLs
+        images = [os.path.join('uploads', user_id, upload_dir, img).replace("\\", "/") for img in image_files]
         uploads.append({
             'timestamp': upload_dir,
-            'images': [os.path.join('uploads', user_id, upload_dir, img) for img in image_files],
+            'images': images,
             'main_image': image_files[0] if image_files else None
         })
         if upload_dir not in brands:
@@ -231,7 +235,7 @@ def index():
     for upload in uploads:
         print('Upload:', upload['timestamp'])
         for img in upload['images']:
-            print('  Image:', img, 'Exists:', os.path.exists(os.path.join('static', img)))
+            print('  Image:', img, 'Exists:', os.path.exists(os.path.join('static', img.replace("/", os.sep))))
     return render_template('Home.html', uploads=uploads, date=dates_to_display, brands=brands)
 
 @app.route('/apply_livery', methods=['POST'])
@@ -240,8 +244,8 @@ def apply_livery():
     car_image_filename = request.form.get('car_image_filename')
     livery_image_filename = request.form.get('livery_image_filename')
 
-    car_image_path = os.path.join(app.config['UPLOAD_FOLDER'], car_image_filename)
-    livery_image_path = os.path.join(app.config['UPLOAD_FOLDER'], livery_image_filename)
+    car_image_path = os.path.join(app.config['UPLOAD_FOLDER'], car_image_filename.replace("/", os.sep))
+    livery_image_path = os.path.join(app.config['UPLOAD_FOLDER'], livery_image_filename.replace("/", os.sep))
 
     # Error handling for missing files
     if not os.path.exists(car_image_path):
@@ -259,7 +263,8 @@ def apply_livery():
     car_image.paste(livery_image, (0, 0), livery_image)
 
     # Save the modified image
-    modified_image_path = os.path.join(app.config['UPLOAD_FOLDER'], car_image_filename.split('/')[0], 'modified_car_image.png')
+    modified_dir = os.path.dirname(car_image_path)
+    modified_image_path = os.path.join(modified_dir, 'modified_car_image.png')
     car_image.save(modified_image_path)
 
     return redirect(url_for('car', filename=car_image_filename.split('/')[0]))
@@ -317,7 +322,8 @@ def uploadfile():
 
 @app.route('/display/<filename>/<file>')
 def display_image(filename, file):
-    path = os.path.join('uploads', filename.split('.')[0], file)
+    # Fix: Use forward slashes for URLs
+    path = os.path.join('uploads', filename.split('.')[0], file).replace("\\", "/")
     return redirect(url_for('static', filename=path), code=301)
 
 @app.route('/<filename>', methods=['GET', 'POST'])
@@ -340,12 +346,12 @@ def car(filename):
         ext = 'png' if key == 'nobg' else 'jpg'
         path = os.path.join(upload_dir_path, f'{key}.{ext}')
         if os.path.exists(path):
-            images[key] = os.path.join('uploads', user_id, filename, f'{key}.{ext}')
+            images[key] = os.path.join('uploads', user_id, filename, f'{key}.{ext}').replace("\\", "/")
     # Brand logo (from brand folder)
     brand_logo_path = glob.glob(os.path.join(upload_dir_path, 'brand', '*.jpg'))
     if brand_logo_path:
-        images['brand'] = brand_logo_path[0].replace('static/', '')
-    # Segmented parts
+        images['brand'] = brand_logo_path[0].replace('static/', '').replace("\\", "/")
+    # Segmented parts (removed from UI, but still collected if needed)
     part_names = ['back_bumper', 'back_glass', 'back_left_door', 'back_left_light', 'back_right_door', 
                  'back_right_light', 'front_bumper', 'front_glass', 'front_left_door', 'front_left_light', 
                  'front_right_door', 'front_right_light', 'hood', 'left_mirror', 'right_mirror', 
@@ -354,7 +360,15 @@ def car(filename):
     for part_name in part_names:
         part_path = os.path.join(upload_dir_path, f'{part_name}.png')
         if os.path.exists(part_path):
-            parts.append(os.path.join('uploads', user_id, filename, f'{part_name}.png'))
+            parts.append(os.path.join('uploads', user_id, filename, f'{part_name}.png').replace("\\", "/"))
+    # Generated image
+    gen_path = os.path.join(upload_dir_path, 'generated.jpg')
+    if os.path.exists(gen_path):
+        images['generated'] = os.path.join('uploads', user_id, filename, 'generated.jpg').replace("\\", "/")
+    else:
+        output_path = os.path.join(upload_dir_path, 'output.jpg')
+        if os.path.exists(output_path):
+            images['generated'] = os.path.join('uploads', user_id, filename, 'output.jpg').replace("\\", "/")
     print("Car page images:", images)
     print("Car page parts:", parts)
     return render_template('Car.html', filename=filename, images=images, parts=parts)
@@ -432,59 +446,75 @@ def results():
     for upload_dir in uploaded_dirs:
         upload_path = os.path.join(user_upload_dir, upload_dir)
         processed_images = {}
-        
+
+        # Helper to build web URL from local path
+        def to_url(path):
+            # Remove only the first 'static' and any leading slashes
+            rel_path = os.path.relpath(path, 'static')
+            return rel_path.replace("\\", "/")
+
         # Original image
         original_path = os.path.join(upload_path, 'original.jpg')
         if os.path.exists(original_path):
-            processed_images['original'] = original_path.replace('static/', '')
-        
+            processed_images['original'] = to_url(original_path)
+
         # Semantic segmentation
         semantic_path = os.path.join(upload_path, 'sementic.jpg')
         if os.path.exists(semantic_path):
-            processed_images['semantic'] = semantic_path.replace('static/', '')
-        
+            processed_images['semantic'] = to_url(semantic_path)
+
         # Background removed
         nobg_path = os.path.join(upload_path, 'nobg.png')
         if os.path.exists(nobg_path):
-            processed_images['nobg'] = nobg_path.replace('static/', '')
-        
+            processed_images['nobg'] = to_url(nobg_path)
+
         # Segmentation mask
         mask_path = os.path.join(upload_path, 'mask.jpg')
         if os.path.exists(mask_path):
-            processed_images['mask'] = mask_path.replace('static/', '')
-        
+            processed_images['mask'] = to_url(mask_path)
+
         # Brand logo
         brand_logo_path = os.path.join(upload_path, 'brand')
         if os.path.exists(brand_logo_path):
             brand_files = [f for f in os.listdir(brand_logo_path) if f.endswith('.jpg') or f.endswith('.png')]
             if brand_files:
-                processed_images['brand'] = os.path.join(upload_path, 'brand', brand_files[0]).replace('static/', '')
+                processed_images['brand'] = to_url(os.path.join(upload_path, 'brand', brand_files[0]))
                 brands.append(brand_files[0].split('.')[0])
-        
+
         # Individual car parts (segmented parts)
         parts = []
-        part_names = ['back_bumper', 'back_glass', 'back_left_door', 'back_left_light', 'back_right_door', 
-                     'back_right_light', 'front_bumper', 'front_glass', 'front_left_door', 'front_left_light', 
-                     'front_right_door', 'front_right_light', 'hood', 'left_mirror', 'right_mirror', 
-                     'tailgate', 'trunk', 'wheel']
-        
+        part_names = [
+            'back_bumper', 'back_glass', 'back_left_door', 'back_left_light', 'back_right_door',
+            'back_right_light', 'front_bumper', 'front_glass', 'front_left_door', 'front_left_light',
+            'front_right_door', 'front_right_light', 'hood', 'left_mirror', 'right_mirror',
+            'tailgate', 'trunk', 'wheel'
+        ]
         for part_name in part_names:
             part_path = os.path.join(upload_path, f'{part_name}.png')
             if os.path.exists(part_path):
-                parts.append(part_path.replace('static/', ''))
-        
+                parts.append(to_url(part_path))
+
+        # Generation result
+        gen_path = os.path.join(upload_path, 'generated.jpg')
+        if os.path.exists(gen_path):
+            processed_images['generated'] = to_url(gen_path)
+        else:
+            output_path = os.path.join(upload_path, 'output.jpg')
+            if os.path.exists(output_path):
+                processed_images['generated'] = to_url(output_path)
+
         if parts:
             processed_images['parts'] = parts
-        
+
         results_data.append({
             'timestamp': upload_dir,
             'date': upload_dir.split('_')[0],
             'images': processed_images
         })
-    
+
     dates_to_display = sorted(list(set([r['date'] for r in results_data])), reverse=True)
     brands = sorted(list(set(brands)))
-    
+
     return render_template('Results.html', results=results_data, dates=dates_to_display, brands=brands)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -573,6 +603,129 @@ def delete_my_data():
     session.clear()
     flash('Your account and all your data have been deleted.', 'success')
     return redirect(url_for('register'))
+
+@app.route('/generate_image', methods=['POST'])
+def generate_image_route():
+    """
+    Expects JSON with keys: 'prompt', 'image_path'.
+    Uses the server-side IMGBB_API_KEY from configs.py.
+    """
+    data = request.json
+    prompt = data.get('prompt')
+    image_path = data.get('image_path')
+    if not prompt or not image_path:
+        return jsonify({'error': 'Missing required fields'}), 400
+    try:
+        image_url = upload_to_imgbb(image_path, IMGBB_API_KEY)
+        result = generate_image(prompt, image_url)
+        output = result['output'][0] if isinstance(result.get('output'), list) else result.get('output')
+        # Redirect to result page with output
+        return jsonify({'redirect': url_for('generate_result_page', output=output)})
+    except Exception as e:
+        # Redirect to result page with error
+        return jsonify({'redirect': url_for('generate_result_page', error=str(e))})
+
+@app.route('/generate_result', methods=['GET'])
+def generate_result_page():
+    output = request.args.get('output')
+    error = request.args.get('error')
+    return render_template('generate_result.html', output=output, error=error)
+
+@app.route('/upload_temp_image', methods=['POST'])
+def upload_temp_image():
+    """
+    Accepts a file upload and saves it to a temporary location. Returns the server path for backend use.
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    filename = werkzeug.utils.secure_filename(file.filename)
+    temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp')
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_path = os.path.join(temp_dir, filename)
+    file.save(temp_path)
+    return jsonify({'path': temp_path})
+
+@app.route('/upload_and_generate', methods=['POST'])
+def upload_and_generate():
+    if 'user_id' not in session:
+        flash('Please log in to upload images.', 'error')
+        return redirect(url_for('login'))
+    user_id = str(session['user_id'])
+    if 'file' not in request.files or not request.form.get('prompt'):
+        flash('Image and prompt are required.', 'error')
+        return redirect(url_for('uploadfile'))
+    file = request.files['file']
+    prompt = request.form['prompt']
+    if file.filename == '':
+        flash('No image selected for uploading', 'error')
+        return redirect(url_for('uploadfile'))
+    if not allowed_file(file.filename):
+        flash('Invalid file type.', 'error')
+        return redirect(url_for('uploadfile'))
+    # Save image to user folder
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_id, timestamp)
+    os.makedirs(user_upload_dir, exist_ok=True)
+    os.makedirs(os.path.join(user_upload_dir, 'brand'), exist_ok=True)
+    original_filename = werkzeug.utils.secure_filename(file.filename)
+    original_path = os.path.join(user_upload_dir, 'original.jpg')
+    file.save(original_path)
+    logger.info(f"[UPLOAD_AND_GENERATE] Saved original image: {original_path}")
+    # Segmentation pipeline
+    try:
+        nobg_path = os.path.join(user_upload_dir, 'nobg.png')
+        remove_car_background(original_path, nobg_path)
+        logger.info(f"[UPLOAD_AND_GENERATE] Saved background-removed image: {nobg_path}")
+        import cv2 as cv
+        img = cv.imread(original_path)
+        if img is None:
+            logger.error(f"[UPLOAD_AND_GENERATE] cv.imread failed for {original_path}")
+            flash('Failed to read uploaded image for segmentation.', 'error')
+            return redirect(url_for('uploadfile'))
+        xy, _ = usemodel(img.copy(), os.path.join(user_upload_dir, 'brand'))
+        logger.info(f"[UPLOAD_AND_GENERATE] usemodel result: {xy}")
+        visualize_model(img, os.path.join(user_id, timestamp), model_finetune)
+        logger.info(f"[UPLOAD_AND_GENERATE] visualize_model completed.")
+    except Exception as e:
+        logger.error(f"[UPLOAD_AND_GENERATE] Segmentation pipeline error: {str(e)}")
+        flash(f'Segmentation error: {str(e)}', 'error')
+        return redirect(url_for('uploadfile'))
+    # Generation pipeline
+    try:
+        from gen import generate_image, upload_to_imgbb
+        from configs import IMGBB_API_KEY
+        # Upload the original image to ImgBB
+        logger.info(f"[UPLOAD_AND_GENERATE] Uploading to ImgBB: {original_path}")
+        image_url = upload_to_imgbb(original_path, IMGBB_API_KEY)
+        logger.info(f"[UPLOAD_AND_GENERATE] ImgBB URL: {image_url}")
+        logger.info(f"[UPLOAD_AND_GENERATE] Prompt: {prompt}")
+        # Call the generator
+        result = generate_image(prompt, image_url)
+        logger.info(f"[UPLOAD_AND_GENERATE] Generator result: {result}")
+        output_url = result['output'][0] if isinstance(result.get('output'), list) else result.get('output')
+        logger.info(f"[UPLOAD_AND_GENERATE] Output URL: {output_url}")
+        # Download the generated image to the upload folder for display
+        import requests
+        gen_path = os.path.join(user_upload_dir, 'generated.jpg')
+        r = requests.get(output_url, stream=True)
+        if r.status_code == 200:
+            with open(gen_path, 'wb') as f:
+                for chunk in r.iter_content(1024):
+                    f.write(chunk)
+            logger.info(f"[UPLOAD_AND_GENERATE] Saved generated image: {gen_path}")
+        else:
+            logger.error(f"[UPLOAD_AND_GENERATE] Failed to download generated image from {output_url}, status {r.status_code}")
+            flash('Failed to download generated image.', 'error')
+            return redirect(url_for('uploadfile'))
+    except Exception as e:
+        logger.error(f"[UPLOAD_AND_GENERATE] Generation pipeline error: {str(e)}")
+        flash(f'Generation error: {str(e)}', 'error')
+        return redirect(url_for('uploadfile'))
+    # flash('Upload, segmentation, and generation successful!', 'success')
+    return jsonify({'redirect': url_for('generate_result_page', output=output_url)})
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0', port=3001)

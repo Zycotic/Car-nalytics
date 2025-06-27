@@ -24,6 +24,26 @@
         "email": "alihassancutt@gmail.com",
         "password": "Alihassan123@",
         "created_at": "2025-06-26T19:50:31.710397",
+        "last_login": NaN,
+        "failed_login_attempts": 0,
+        "is_active": true,
+        "verification_token": NaN
+    },
+    "4": {
+        "username": "Allam",
+        "email": "allam@gmail.com",
+        "password": "pbkdf2:sha256:260000$jhqElP07ppJlhh3v$8e6af83a284632ae86d6b2c5f430b6b0efd7e235db92dbca4e9b7793331b61c8",
+        "created_at": "2025-06-26T21:36:13.811742",
+        "last_login": NaN,
+        "failed_login_attempts": 0,
+        "is_active": true,
+        "verification_token": NaN
+    },
+    "5": {
+        "username": "Allam1",
+        "email": "allam100@gmail.com",
+        "password": "Allam123@",
+        "created_at": "2025-06-27T02:08:49.212447",
         "last_login": "",
         "failed_login_attempts": 0,
         "is_active": true,

@@ -98,20 +98,6 @@ body, .main-content, .container-fluid {
                 <div class="card-body p-2">
                   <h6 class="mb-1">{{ upload.images[0].split('/')[-1] }}</h6>
                   <a href="{{ url_for('car', filename=upload.timestamp) }}" class="btn btn-outline-primary btn-sm mt-2">View Details</a>
-                  {# --- PARTS SECTION START --- #}
-                  {% set part_names = ['back_bumper', 'back_glass', 'back_left_door', 'back_left_light', 'back_right_door', 'back_right_light', 'front_bumper', 'front_glass', 'front_left_door', 'front_left_light', 'front_right_door', 'front_right_light', 'hood', 'left_mirror', 'right_mirror', 'tailgate', 'trunk', 'wheel'] %}
-                  <div class="mt-2">
-                    <small class="text-muted">Parts:</small>
-                    <div class="d-flex flex-wrap gap-1">
-                      {% for part in part_names %}
-                        {% set part_path = 'uploads/' ~ session['user_id'] ~ '/' ~ upload.timestamp ~ '/' ~ part ~ '.png' %}
-                        {% if part_path in upload.images %}
-                          <img src="{{ url_for('static', filename=part_path) }}" alt="{{ part }}" class="img-thumbnail" style="height:40px;width:40px;object-fit:contain;cursor:pointer;" onclick="showPartModal('{{ url_for('static', filename=part_path) }}', '{{ part|replace('_', ' ')|title }}')">
-                        {% endif %}
-                      {% endfor %}
-                    </div>
-                  </div>
-                  {# --- PARTS SECTION END --- #}
                 </div>
               </div>
             </div>
@@ -189,7 +175,7 @@ function confirmDelete(timestamp) {
   if (confirm('Are you sure you want to delete this upload?')) {
     fetch(`/delete_upload/${timestamp}`, {method: 'POST'})
       .then(res => res.json())
-      .then(data => { if(data.status==='success'){ location.reload(); } else { alert('Delete failed'); } });
+      .then data => { if(data.status==='success'){ location.reload(); } else { alert('Delete failed'); } });
   }
 }
 
@@ -221,4 +207,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
- 

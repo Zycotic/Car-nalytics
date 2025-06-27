@@ -1,0 +1,101 @@
+{% extends 'template.html' %} {% block title %}AI Generation Result{% endblock
+%} {% block content %}
+<style>
+  .result-hero {
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 32px rgba(80, 80, 200, 0.08);
+    padding: 2.5rem 2rem 2rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .result-img {
+    border-radius: 1rem;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.2s;
+  }
+  .result-img:hover {
+    box-shadow: 0 4px 32px rgba(80, 80, 200, 0.18);
+  }
+  .result-actions .btn {
+    margin: 0 0.5rem 0.5rem 0;
+  }
+  .alert-success {
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%) !important;
+    color: #fff !important;
+    border: none;
+  }
+</style>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="result-hero text-center">
+        <h2 class="mb-4 fw-bold text-primary">AI Image Generation Result</h2>
+        {% if error %}
+        <div class="alert alert-danger fs-5">{{ error }}</div>
+        {% elif output %}
+        <img src="{{ output }}" class="result-img" alt="Generated Image" />
+        <div class="alert alert-success fs-5 mb-4">
+          Image generated successfully!
+        </div>
+        <div class="result-actions d-flex flex-wrap justify-content-center">
+          <button
+            class="btn btn-primary"
+            onclick="downloadImage('{{ output }}')"
+            type="button"
+          >
+            <i class="fa fa-download me-2"></i>Download Image
+          </button>
+          <a href="{{ output }}" class="btn btn-outline-info" target="_blank">
+            <i class="fa fa-external-link me-2"></i>Open in New Tab
+          </a>
+          <button
+            class="btn btn-outline-secondary"
+            onclick="copyToClipboard('{{ output }}')"
+          >
+            <i class="fa fa-clipboard me-2"></i>Copy Image URL
+          </button>
+        </div>
+        {% else %}
+        <div class="alert alert-warning fs-5">No output image returned.</div>
+        {% endif %}
+        <div class="mt-4">
+          <a
+            href="{{ url_for('uploadfile') }}"
+            class="btn btn-outline-secondary"
+          >
+            <i class="fa fa-arrow-left me-2"></i>Back to Upload
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(
+      function () {
+        alert("Image URL copied to clipboard!");
+      },
+      function () {
+        alert("Failed to copy URL.");
+      }
+    );
+  }
+  function downloadImage(url) {
+    fetch(url, { mode: "cors" })
+      .then((response) => response.blob())
+      .then((blob) => {
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        link.download =
+          url.split("/").pop().split("?")[0] || "generated_image.jpg";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      })
+      .catch(() => alert("Failed to download image."));
+  }
+</script>
+{% endblock %}
