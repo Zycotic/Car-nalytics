@@ -90,16 +90,10 @@
             <div class="d-grid mb-2">
               <button
                 type="button"
-                class="btn btn-primary btn-lg mb-2"
-                id="processSegmentationBtn"
-              >
-                <i class="fa fa-cogs me-2"></i>Process (Segmentation)
-              </button>
-              <button
-                type="button"
                 class="btn btn-success btn-lg"
                 id="processAndGenerateBtn"
               >
+                <span id="processAndGenerateSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
                 <i class="fa fa-magic me-2"></i>Process & Generate
               </button>
             </div>
@@ -375,80 +369,88 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("uploadForm");
-    const progressBarContainer = document.getElementById(
-      "progressBarContainer"
-    );
+    const progressBarContainer = document.getElementById("progressBarContainer");
     const progressBar = document.getElementById("progressBar");
     const errorMsg = document.getElementById("errorMsg");
-    const processSegmentationBtn = document.getElementById(
-      "processSegmentationBtn"
-    );
-    const processAndGenerateBtn = document.getElementById(
-      "processAndGenerateBtn"
-    );
+    const processAndGenerateBtn = document.getElementById("processAndGenerateBtn");
+    const spinner = document.getElementById("processAndGenerateSpinner");
+    const fileInput = document.getElementById("file");
 
-    processSegmentationBtn.addEventListener("click", function () {
-      form.action = "/upload";
-      form.submit();
-    });
-    processAndGenerateBtn.addEventListener("click", function () {
-      form.action = "/upload_and_generate";
-      // Use AJAX for generation to handle JSON redirect
-      const formData = new FormData(form);
-      const xhr = new XMLHttpRequest();
-      if (!progressBarContainer || !progressBar) {
-        showToast(
-          "Upload error: Progress bar missing from page. Please contact support.",
-          "danger"
-        );
-        return;
-      }
-      progressBarContainer.classList.remove("d-none");
-      progressBar.style.width = "0%";
-      progressBar.innerText = "0%";
-      if (errorMsg) {
-        errorMsg.classList.add("d-none");
-        errorMsg.innerText = "";
-      }
-      xhr.upload.addEventListener("progress", function (e) {
-        if (e.lengthComputable && progressBar) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          progressBar.style.width = percent + "%";
-          progressBar.innerText = percent + "%";
+    if (processAndGenerateBtn) {
+      processAndGenerateBtn.addEventListener("click", function (e) {
+        // Prevent double submit
+        if (processAndGenerateBtn.disabled) return;
+        // Check if a file is selected
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showToast("Please select an image to upload.", "danger");
+          return;
         }
-      });
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-          if (xhr.status === 200) {
-            try {
-              const resp = JSON.parse(xhr.responseText);
-              if (resp.redirect) {
-                window.location.href = resp.redirect;
+        form.action = "/upload_and_generate";
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+        if (!progressBarContainer || !progressBar) {
+          showToast(
+            "Upload error: Progress bar missing from page. Please contact support.",
+            "danger"
+          );
+          return;
+        }
+        progressBarContainer.classList.remove("d-none");
+        progressBar.style.width = "0%";
+        progressBar.innerText = "0%";
+        if (errorMsg) {
+          errorMsg.classList.add("d-none");
+          errorMsg.innerText = "";
+        }
+        // Show spinner and disable button
+        processAndGenerateBtn.disabled = true;
+        if (spinner) spinner.classList.remove("d-none");
+        xhr.upload.addEventListener("progress", function (e) {
+          if (e.lengthComputable && progressBar) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percent + "%";
+            progressBar.innerText = percent + "%";
+          }
+        });
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            // Hide spinner and enable button
+            if (spinner) spinner.classList.add("d-none");
+            processAndGenerateBtn.disabled = false;
+            if (xhr.status === 200) {
+              try {
+                const resp = JSON.parse(xhr.responseText);
+                if (resp.redirect) {
+                  window.location.href = resp.redirect;
+                  return;
+                }
+              } catch (e) {
+                window.location.href = xhr.responseURL;
                 return;
               }
-            } catch (e) {
-              window.location.href = xhr.responseURL;
-              return;
-            }
-            showToast("Upload successful!", "success");
-          } else {
-            if (progressBarContainer)
-              progressBarContainer.classList.add("d-none");
-            showToast("Upload failed. Please try again.", "danger");
-            if (errorMsg) {
-              errorMsg.classList.remove("d-none");
-              errorMsg.innerText =
-                xhr.responseText || "Upload failed. Please try again.";
+              showToast("Upload successful!", "success");
+            } else {
+              if (progressBarContainer)
+                progressBarContainer.classList.add("d-none");
+              showToast("Upload failed. Please try again.", "danger");
+              if (errorMsg) {
+                errorMsg.classList.remove("d-none");
+                errorMsg.innerText =
+                  xhr.responseText || "Upload failed. Please try again.";
+              }
             }
           }
-        }
-      };
-      xhr.open("POST", "/upload_and_generate");
-      xhr.send(formData);
-    });
-    // Remove the default form submit handler
+        };
+        xhr.open("POST", "/upload_and_generate");
+        xhr.send(formData);
+      });
+    }
+    // Remove the default form submit handler ONLY if not using AJAX
     form.addEventListener("submit", function (e) {
-      e.preventDefault();
+      // Only prevent default if the submit is not triggered by AJAX
+      if (!form.action.endsWith("/upload_and_generate")) {
+        e.preventDefault();
+      }
     });
   });
 </script>

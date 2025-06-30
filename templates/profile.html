@@ -1,0 +1,119 @@
+{% extends 'template.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<style>
+.profile-settings-container {
+  max-width: 540px;
+  margin: 40px auto;
+  background: var(--card-bg, #fff);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem 2rem 2rem;
+}
+.profile-settings-container h2 {
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.profile-photo-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e0e7ef;
+  margin-bottom: 0.5rem;
+}
+.profile-upload-btn {
+  margin-bottom: 1.5rem;
+}
+.form-label {
+  font-weight: 600;
+}
+.deactivate-section {
+  border-top: 1px solid #e0e7ef;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+}
+</style>
+<div class="profile-settings-container">
+  <h2>Account settings</h2>
+  <form method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data">
+    <div class="row mb-4 align-items-center">
+      <div class="col-auto">
+        <img src="{{ url_for('static', filename=user.profile_photo) if user.profile_photo else url_for('static', filename='assets/img/default-profile.png') }}" class="profile-photo-preview" id="profilePhotoPreview">
+      </div>
+      <div class="col">
+        <label class="form-label mb-1">Profile Photo</label>
+        <div class="d-flex align-items-center gap-2">
+          <input type="file" name="profile_photo" id="profilePhotoInput" accept="image/png, image/jpeg" style="display:none" onchange="previewProfilePhoto(event)">
+          <button type="button" class="btn btn-outline-primary btn-sm profile-upload-btn" onclick="document.getElementById('profilePhotoInput').click()">Upload</button>
+          <span class="text-muted small">Accepted file type .png, .jpg. Less than 1MB</span>
+        </div>
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <label for="first_name" class="form-label">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label for="last_name" class="form-label">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" class="form-control" id="email" name="email" value="{{ user.email or '' }}" readonly>
+      </div>
+      <div class="col-md-6">
+        <label for="phone" class="form-label">Phone Number</label>
+        <input type="text" class="form-control" id="phone" name="phone" value="{{ user.phone or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label for="country" class="form-label">Country</label>
+        <select class="form-select" id="country" name="country">
+          <option value="">Select Country</option>
+          <option value="India" {% if user.country == 'India' %}selected{% endif %}>India</option>
+          <option value="USA" {% if user.country == 'USA' %}selected{% endif %}>USA</option>
+          <option value="UK" {% if user.country == 'UK' %}selected{% endif %}>UK</option>
+          <option value="Germany" {% if user.country == 'Germany' %}selected{% endif %}>Germany</option>
+          <option value="France" {% if user.country == 'France' %}selected{% endif %}>France</option>
+          <option value="Other" {% if user.country == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="language" class="form-label">Language</label>
+        <select class="form-select" id="language" name="language">
+          <option value="English" {% if user.language == 'English' %}selected{% endif %}>English</option>
+          <option value="French" {% if user.language == 'French' %}selected{% endif %}>French</option>
+          <option value="German" {% if user.language == 'German' %}selected{% endif %}>German</option>
+          <option value="Hindi" {% if user.language == 'Hindi' %}selected{% endif %}>Hindi</option>
+          <option value="Other" {% if user.language == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mb-2">
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+  <div class="deactivate-section">
+    <strong>Deactivate your account</strong>
+    <p class="text-muted small mb-2">Details about your account and password</p>
+    <form method="POST" action="{{ url_for('delete_my_data') }}">
+      <button type="submit" class="btn btn-outline-danger">Deactivate</button>
+    </form>
+  </div>
+</div>
+<script>
+function previewProfilePhoto(event) {
+  const [file] = event.target.files;
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('profilePhotoPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+</script>
+{% endblock %}

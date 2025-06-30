@@ -112,6 +112,8 @@ def save_users(users):
         for user in users:
             user_id = str(user['id'])
             formatted_users[user_id] = {
+                'first_name': user.get('first_name', ''),
+                'last_name': user.get('last_name', ''),
                 'username': user['username'],
                 'email': user['email'],
                 'password': user['password'],
@@ -520,6 +522,8 @@ def results():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
@@ -538,9 +542,14 @@ def register():
         if not valid:
             flash(msg, 'error')
             return render_template('register.html')
+        if not first_name or not last_name:
+            flash('First name and last name are required.', 'error')
+            return render_template('register.html')
         user_id = max([u['id'] for u in users], default=0) + 1
         new_user = {
             'id': user_id,
+            'first_name': first_name,
+            'last_name': last_name,
             'username': username,
             'email': email,
             'password': password,  # Store password in plain text (INSECURE - for testing only)
@@ -726,6 +735,67 @@ def upload_and_generate():
         return redirect(url_for('uploadfile'))
     # flash('Upload, segmentation, and generation successful!', 'success')
     return jsonify({'redirect': url_for('generate_result_page', output=output_url)})
+
+@app.route('/profile', methods=['GET'])
+def profile():
+    if 'user_id' not in session:
+        flash('Please log in to view your profile.', 'error')
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+    users = load_users()
+    user = next((u for u in users if u['id'] == user_id), None)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('index'))
+    # Add default fields if missing
+    user.setdefault('preferences', '')
+    user.setdefault('liveries', [])
+    user.setdefault('images', [])
+    return render_template('profile.html', user=user)
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'user_id' not in session:
+        flash('Please log in to update your profile.', 'error')
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+    users = load_users()
+    user = next((u for u in users if u['id'] == user_id), None)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('index'))
+    # Update fields
+    user['first_name'] = request.form.get('first_name', '')
+    user['last_name'] = request.form.get('last_name', '')
+    user['phone'] = request.form.get('phone', '')
+    user['country'] = request.form.get('country', '')
+    user['language'] = request.form.get('language', '')
+    # Profile photo upload
+    if 'profile_photo' in request.files:
+        file = request.files['profile_photo']
+        if file and file.filename:
+            ext = file.filename.rsplit('.', 1)[-1].lower()
+            if ext in ['jpg', 'jpeg', 'png'] and len(file.read()) < 1024*1024:
+                file.seek(0)
+                filename = f"profile_{user_id}.{ext}"
+                path = os.path.join('static', 'uploads', str(user_id), filename)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                file.save(path)
+                user['profile_photo'] = f"uploads/{user_id}/{filename}"
+            else:
+                flash('Profile photo must be .jpg/.png and less than 1MB.', 'error')
+                return redirect(url_for('profile'))
+    save_users(users)
+    flash('Profile updated!', 'success')
+    return redirect(url_for('profile'))
+
+@app.context_processor
+def inject_user():
+    user = None
+    if 'user_id' in session:
+        users = load_users()
+        user = next((u for u in users if u['id'] == session['user_id']), None)
+    return dict(user=user)
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0', port=3001)

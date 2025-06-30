@@ -61,6 +61,11 @@
       href="{{ url_for('static', filename='assets/css/soft-ui-dashboard.css')}}"
       rel="stylesheet"
     />
+    <link
+      href="{{ url_for('static', filename='assets/css/custom-sidebar.css')}}"
+      rel="stylesheet"
+    />
+    <!-- Custom sidebar CSS for active link highlighting -->
   </head>
 
   <body class="g-sidenav-show bg-gray-100">
@@ -92,51 +97,67 @@
         <ul class="nav flex-column">
           <li class="nav-item mb-2">
             <a
-              class="nav-link d-flex align-items-center sidebar-link"
+              class="nav-link d-flex align-items-center sidebar-link {% if request.endpoint == 'index' %}active-sidebar{% endif %}"
               href="{{ url_for('index') }}"
-              style="color: #1a237e; font-weight: 600"
+              style="color: var(--sidebar-text, #1a237e); font-weight: 600"
             >
-              <i class="fa fa-home me-2" style="color: #1a237e"></i> Home
+              <i
+                class="fa fa-home me-2"
+                style="color: var(--sidebar-text, #1a237e)"
+              ></i>
+              Home
             </a>
           </li>
           <li class="nav-item mb-2">
             <a
-              class="nav-link d-flex align-items-center sidebar-link"
+              class="nav-link d-flex align-items-center sidebar-link {% if request.endpoint == 'uploadfile' %}active-sidebar{% endif %}"
               href="{{ url_for('uploadfile') }}"
-              style="color: #1a237e; font-weight: 600"
+              style="color: var(--sidebar-text, #1a237e); font-weight: 600"
             >
-              <i class="fa fa-upload me-2" style="color: #1a237e"></i> Upload
+              <i
+                class="fa fa-upload me-2"
+                style="color: var(--sidebar-text, #1a237e)"
+              ></i>
+              Upload
             </a>
           </li>
           <li class="nav-item mb-2">
             <a
-              class="nav-link d-flex align-items-center sidebar-link"
+              class="nav-link d-flex align-items-center sidebar-link {% if request.endpoint == 'results' %}active-sidebar{% endif %}"
               href="{{ url_for('results') }}"
-              style="color: #1a237e; font-weight: 600"
+              style="color: var(--sidebar-text, #1a237e); font-weight: 600"
             >
-              <i class="fa fa-chart-bar me-2" style="color: #1a237e"></i>
+              <i
+                class="fa fa-chart-bar me-2"
+                style="color: var(--sidebar-text, #1a237e)"
+              ></i>
               Results
             </a>
           </li>
           <li class="nav-item mb-2">
             <a
-              class="nav-link d-flex align-items-center sidebar-link"
-              href="#notifications"
-              onclick="scrollToSection('notifications')"
-              style="color: #1a237e; font-weight: 600"
+              class="nav-link d-flex align-items-center sidebar-link {% if request.endpoint == 'privacy' %}active-sidebar{% endif %}"
+              href="{{ url_for('privacy') }}"
+              style="color: var(--sidebar-text, #1a237e); font-weight: 600"
             >
-              <i class="fa fa-bell me-2" style="color: #1a237e"></i>
-              Notifications
+              <i
+                class="fa fa-user-secret me-2"
+                style="color: var(--sidebar-text, #1a237e)"
+              ></i>
+              Privacy Policy
             </a>
           </li>
           <li class="nav-item mb-2">
             <a
-              class="nav-link d-flex align-items-center sidebar-link"
-              href="{{ url_for('privacy') }}"
-              style="color: #1a237e; font-weight: 600"
+              class="nav-link d-flex align-items-center sidebar-link {% if request.endpoint == 'profile' %}active-sidebar{% endif %}"
+              href="{{ url_for('profile') }}"
+              style="color: var(--sidebar-text, #1a237e); font-weight: 600"
             >
-              <i class="fa fa-user-secret me-2" style="color: #1a237e"></i>
-              Privacy Policy
+              <i
+                class="fa fa-user me-2"
+                style="color: var(--sidebar-text, #1a237e)"
+              ></i>
+              Profile
             </a>
           </li>
           <li class="nav-item mb-2">
@@ -166,8 +187,28 @@
       <!-- Main Content -->
       <div
         class="main-content flex-grow-1"
-        style="margin-left: 220px; min-height: 100vh; background: #f5f7fa"
+        style="
+          margin-left: 220px;
+          min-height: 100vh;
+          background: #f5f7fa;
+          position: relative;
+        "
       >
+        {% if request.endpoint != 'profile' and session.get('user_id') %}
+        <div class="user-avatar-container">
+          <a href="{{ url_for('profile') }}" class="user-avatar-topright">
+            <img
+              src="{{ url_for('static', filename=user.profile_photo) if user and user.profile_photo else url_for('static', filename='assets/img/default-profile.png') }}"
+              class="user-avatar-img"
+              alt="Profile"
+            />
+          </a>
+          <div class="user-avatar-username">
+            {{ (user.first_name ~ ' ' ~ user.last_name).strip() if user and
+            user.first_name and user.last_name else user.username }}
+          </div>
+        </div>
+        {% endif %}
         <div class="container-fluid py-4">
           {% block breadcrumb %}{% endblock %} {% block content %}{% endblock %}
         </div>
@@ -491,3 +532,66 @@
     </script>
   </body>
 </html>
+
+<style>
+  .user-avatar-container {
+    position: absolute;
+    top: 24px;
+    right: 36px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+  }
+  .user-avatar-username {
+    margin-top: 4px;
+    font-size: 0.95rem;
+    color: #fff;
+    background: linear-gradient(90deg, #6366f1 60%, #60a5fa 100%);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
+    border-radius: 12px;
+    padding: 4px 16px 4px 16px;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+  }
+  .user-avatar-topright {
+    position: static;
+    margin: 0 auto;
+  }
+  .user-avatar-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    background: linear-gradient(135deg, #6366f1 60%, #60a5fa 100%);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.22), 0 0 0 4px #a5b4fc;
+    transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+    padding: 3px;
+    display: block;
+  }
+  .user-avatar-topright:hover .user-avatar-img {
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.38), 0 0 0 6px #6366f1;
+    border-color: #6366f1;
+    background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);
+  }
+  @media (max-width: 600px) {
+    .user-avatar-container {
+      top: 12px;
+      right: 12px;
+      min-width: 60px;
+    }
+    .user-avatar-username {
+      font-size: 0.95rem;
+      padding: 2px 10px 2px 10px;
+      max-width: 100px;
+    }
+    .user-avatar-img {
+      width: 44px;
+      height: 44px;
+      padding: 2px;
+    }
+  }
+</style>

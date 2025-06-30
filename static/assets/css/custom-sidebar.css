@@ -1,0 +1,13 @@
+.active-sidebar {
+  background: linear-gradient(90deg, #1f204f 0%, #3245a0 100%) !important;
+  color: #fff !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.1);
+}
+.active-sidebar i {
+  color: #fff !important;
+}
+.sidebar-link.active-sidebar {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}

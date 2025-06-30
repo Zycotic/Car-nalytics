@@ -1,5 +1,7 @@
 {
     "1": {
+        "first_name": NaN,
+        "last_name": NaN,
         "username": "test",
         "email": "test@test.com",
         "password": "test123",
@@ -10,6 +12,8 @@
         "verification_token": NaN
     },
     "2": {
+        "first_name": NaN,
+        "last_name": NaN,
         "username": "ali",
         "email": "alihassancut@gmail.com",
         "password": "ali123",
@@ -20,6 +24,8 @@
         "verification_token": NaN
     },
     "3": {
+        "first_name": NaN,
+        "last_name": NaN,
         "username": "alii",
         "email": "alihassancutt@gmail.com",
         "password": "Alihassan123@",
@@ -30,6 +36,8 @@
         "verification_token": NaN
     },
     "4": {
+        "first_name": NaN,
+        "last_name": NaN,
         "username": "Allam",
         "email": "allam@gmail.com",
         "password": "pbkdf2:sha256:260000$jhqElP07ppJlhh3v$8e6af83a284632ae86d6b2c5f430b6b0efd7e235db92dbca4e9b7793331b61c8",
@@ -40,6 +48,8 @@
         "verification_token": NaN
     },
     "5": {
+        "first_name": "Mohamed",
+        "last_name": "Allam",
         "username": "Allam1",
         "email": "allam100@gmail.com",
         "password": "Allam123@",
@@ -49,14 +59,16 @@
         "is_active": true,
         "verification_token": NaN
     },
-    "6": {
-        "username": "Moataz",
-        "email": "moataz@gmail.com",
-        "password": "Moataz123@",
-        "created_at": "2025-06-28T01:21:57.229486",
-        "last_login": "",
+    "7": {
+        "first_name": NaN,
+        "last_name": NaN,
+        "username": "Moatazzzzz",
+        "email": "moataz100@gmail.com",
+        "password": "Moataz12345@",
+        "created_at": "2025-06-30T16:17:36.576692",
+        "last_login": NaN,
         "failed_login_attempts": 0,
         "is_active": true,
-        "verification_token": ""
+        "verification_token": NaN
     }
 }
