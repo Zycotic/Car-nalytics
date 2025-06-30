@@ -17,29 +17,34 @@
 active {% endblock %} {% block content %} {% if filename %}
 <h2>Results!</h2>
 <h4>
-  {% if data['logo'] %} Car Brand Detection
-  <span class="badge bg-primary"
-    >{{ data['logo'].replace('\\',
-    '/').split('/')[-1].split('.')[-2].split('_')[-1].capitalize() }}
+  {% if images.brand %} Car Brand Detection
+  <span class="badge bg-primary">
+    {{ images.brand.replace('uploads/',
+    '').split('/')[-1].split('.')[0].capitalize() }}
   </span>
   {% endif %}
 </h4>
 <div class="row mt-4 justify-content-center">
   <form action="{{ url_for('apply_livery') }}" method="post">
-    <input type="hidden" name="car_image_filename" value="{{ filename }}/original.jpg" />
-    <input type="hidden" name="livery_image_filename" value="{{ filename }}/logo.jpg" />
+    <input
+      type="hidden"
+      name="car_image_filename"
+      value="{{ filename }}/original.jpg"
+    />
+    <input
+      type="hidden"
+      name="livery_image_filename"
+      value="{{ filename }}/logo.jpg"
+    />
     <button type="submit" class="btn btn-primary">Apply Livery</button>
   </form>
-  {% for i in ['logo'] %}
+  {% if images.logo %}
   <div class="col-md-8 mb-4 d-flex justify-content-center">
     <div class="card">
       <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
-        <a
-          href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
-          class="d-block"
-        >
+        <a href="{{ url_for('static', filename=images.logo) }}" class="d-block">
           <img
-            src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+            src="{{ url_for('static', filename=images.logo) }}"
             class="img-fluid border-radius-lg"
           />
         </a>
@@ -52,16 +57,42 @@ active {% endblock %} {% block content %} {% if filename %}
       </div>
     </div>
   </div>
-  {% endfor %} {% if data['logo'] %} {% endif %}
+  {% endif %}
 </div>
-{% if modified_image %}
+
+{# --- GENERATED IMAGE SECTION (matches Results.html style) --- #} {% if
+images.generated %}
 <div class="row mt-4 justify-content-center">
-  <img
-    src="{{ url_for('static', filename=modified_image) }}"
-    alt="Modified Car Image"
-  />
+  <div class="col-md-8 mb-4 d-flex justify-content-center">
+    <div class="card">
+      <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">
+        <a
+          href="{{ url_for('static', filename=images.generated) }}"
+          class="d-block"
+        >
+          <img
+            src="{{ url_for('static', filename=images.generated) }}"
+            class="img-fluid border-radius-lg"
+            alt="Generated Image"
+          />
+        </a>
+      </div>
+      <div class="card-body pt-2 text-center">
+        <span
+          class="text-gradient text-success text-uppercase text-xs font-weight-bold my-2"
+          >Generated Image</span
+        >
+        <a
+          href="{{ url_for('static', filename=images.generated) }}"
+          download
+          class="btn btn-outline-success btn-sm mt-2"
+          >Download</a
+        >
+      </div>
+    </div>
+  </div>
 </div>
-{% endif %}
+{% endif %} {# --- END GENERATED IMAGE SECTION --- #}
 
 <div class="accordion" id="accordionExample">
   <div class="accordion-item">
@@ -86,21 +117,28 @@ active {% endblock %} {% block content %} {% if filename %}
     >
       <div class="accordion-body">
         <div class="row mt-4">
-          {% for i in ['Original','Sementic','Mask'] %}
+          {% for key, label in
+          {'original':'Original','sementic':'Sementic','mask':'Mask'}.items() %}
           <div class="col-md-4 mb-4">
             <div class="card">
               <div
                 class="card-header p-0 mx-3 mt-3 position-relative z-index-1"
               >
+                {% if images[key] %}
                 <a
-                  href="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+                  href="{{ url_for('static', filename=images[key]) }}"
                   class="d-block"
                 >
                   <img
-                    src="{{ url_for('static', filename='uploads/' + filename + '/' + i + '.jpg') }}"
+                    src="{{ url_for('static', filename=images[key]) }}"
                     class="img-fluid border-radius-lg"
                   />
                 </a>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                  No {{ label }} image
+                </div>
+                {% endif %}
               </div>
               <div class="card-body pt-2">
                 <span
@@ -108,98 +146,12 @@ active {% endblock %} {% block content %} {% if filename %}
                   >{{filename}}</span
                 >
                 <a href="javascript:;" class="card-title h5 d-block text-darker"
-                  >{{i}}</a
+                  >{{label}}</a
                 >
-                <p class="card-description"></p>
               </div>
             </div>
           </div>
           {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %} {% if files %}
-<div class="row mt-4">
-  <!--    <h4>Output !</h4>-->
-  <!--    {% for i in files %}-->
-  <!--    <div class="col-md-4">-->
-  <!--        <div class="card mb-4">-->
-  <!--            <div class="card-header p-0 mx-3 mt-3 position-relative z-index-1">-->
-  <!--                <a href="{{ url_for('static', filename=i.replace('/static/','')) }}" class="d-block">-->
-  <!--                    <img src="{{ url_for('static', filename=i.replace('/static/','')) }}"-->
-  <!--                         class="img-fluid border-radius-lg">-->
-  <!--                </a>-->
-  <!--            </div>-->
-
-  <!--            <div class="card-body pt-1 pb-4">-->
-  <!--                <span class="text-gradient text-primary text-uppercase text-xs font-weight-bold my-2">Part Name</span>-->
-  <!--                <a href="javascript:;" class="card-title h5 d-block text-darker">-->
-  <!--                    {{i.split('/')[-1].split('.')[0].replace('_',' ')}}-->
-  <!--                </a>-->
-  <!--            </div>-->
-  <!--        </div>-->
-  <!--    </div>-->
-
-  <!--    {% endfor %}-->
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingTwo">
-      <button
-        class="accordion-button collapsed mx-3"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#collapseTwo"
-        aria-expanded="false"
-        aria-controls="collapseTwo"
-        style="font-size: 1.25rem"
-      >
-        <strong>Parts</strong>
-      </button>
-    </h2>
-    <div
-      id="collapseTwo"
-      class="accordion-collapse collapse"
-      aria-labelledby="headingTwo"
-      data-bs-parent="#accordionExample"
-    >
-      <div class="accordion-body">
-        <div class="row mt-4">
-          <div class="col-12 mt-4">
-            <div class="card mb-4">
-              <div class="card-header pb-0 p-3">
-                <h6 class="mb-1">Parts</h6>
-                <p class="text-sm">Segmented Parts</p>
-              </div>
-              <div class="card-body p-3">
-                <div class="row">
-                  {% for i in files %}
-                  <div class="col-xl-3 col-md-6 mb-xl-4 mb-3">
-                    <div class="card card-blog card-plain">
-                      <div class="position-relative">
-                        <a href="{{ url_for('static', filename=i) }}" class="d-block">
-                          <img
-                            src="{{ url_for('static', filename=i) }}"
-                            alt="img-blur-shadow"
-                            class="img-fluid shadow border-radius-xl"
-                          />
-                        </a>
-                      </div>
-                      <div class="card-body px-1 pb-0">
-                        <a href="{{ url_for('static', filename=i) }}">
-                          <h5>
-                            {{ i.replace('\\', '/').rsplit('/',
-                            1)[-1].rsplit('.', 1)[0].replace('_', ' ') }}
-                          </h5>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

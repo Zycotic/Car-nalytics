@@ -9,8 +9,59 @@
     <div class="col-12 col-xl-4">
       <div class="card shadow-lg border-0">
         <div class="card-header bg-transparent border-0 text-center pt-3">
-          <h4 class="text-gradient text-primary mb-1">Registration Disabled</h4>
-          <p class="text-muted small mb-0">Registration is not required. All features are public.</p>
+          <h4 class="text-gradient text-primary mb-1">Register</h4>
+        </div>
+        <div class="card-body">
+          <!-- All content in one container: requirements, messages, form -->
+          <div class="mb-3">
+            <!-- Registration Requirements -->
+            <div style="background: #1a237e; color: #fff; border-radius: 0.5rem; border: 2px solid #3949ab; padding: 1rem 1.25rem; font-size: 1.08rem; margin-bottom: 1rem;">
+              <div class="d-flex align-items-center mb-2">
+                <i class="fa fa-info-circle me-2" style="font-size: 1.5rem; color: #fff;"></i>
+                <strong style="font-size: 1.15rem;">Registration Requirements:</strong>
+              </div>
+              <ul class="mb-0 ps-4" style="color: #fff;">
+                <li><strong>Username:</strong> 3-20 characters, start with a letter, only letters, numbers, and underscores.</li>
+                <li><strong>Email:</strong> Must be a valid email address.</li>
+                <li><strong>Password:</strong> At least 8 characters, one uppercase, one lowercase, one number, one special character.</li>
+              </ul>
+            </div>
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert"
+                    style="background: #fff; color: {{ '#b71c1c' if category == 'error' else '#1b5e20' }}; border: 2px solid {{ '#b71c1c' if category == 'error' else '#1b5e20' }}; font-weight: 600; border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            <!-- Registration Form -->
+            <form method="POST" action="{{ url_for('register') }}">
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required value="{{ request.form.username or '' }}">
+              </div>
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required value="{{ request.form.email or '' }}">
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+              </div>
+              <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Register</button>
+            </form>
+          </div>
+          <div class="text-center mt-3">
+            <a href="{{ url_for('login') }}">Already have an account? Login</a>
+          </div>
         </div>
       </div>
     </div>

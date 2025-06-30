@@ -16,6 +16,6 @@ Mentor: 	Kitsuchart Pasupa
 3. Unzip model weights and paste to folder `model_env` 
 4. Running project use this command.
 ```
-python app.py
+python3 app.py
 ```
 
