@@ -66,65 +66,121 @@
   <body class="g-sidenav-show bg-gray-100">
     <div class="d-flex">
       <!-- Sidebar -->
-      <nav class="sidebar shadow-sm p-3" style="min-width:220px; height:100vh; position:fixed; top:0; left:0; z-index:1000; background: transparent;">
+      <nav
+        class="sidebar shadow-sm p-3"
+        style="
+          min-width: 220px;
+          height: 100vh;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1000;
+          background: transparent;
+        "
+      >
         <div class="sidebar-header mb-4 text-center">
-          <img src="{{ url_for('static', filename='assets/img/logo-ct-dark.png') }}" alt="Logo" style="width: 120px; filter: brightness(0.8) contrast(1.2);">
-          <h5 class="mt-2 mb-0" style="color: #1a237e; font-weight: bold;">Car-nalytics</h5>
+          <img
+            src="{{ url_for('static', filename='assets/img/logo-ct-dark.png') }}"
+            alt="Logo"
+            style="width: 120px; filter: brightness(0.8) contrast(1.2)"
+          />
+          <h5 class="mt-2 mb-0" style="color: #1a237e; font-weight: bold">
+            Design smarter,<br />
+            shine brighter
+          </h5>
         </div>
         <ul class="nav flex-column">
           <li class="nav-item mb-2">
-            <a class="nav-link d-flex align-items-center sidebar-link" href="{{ url_for('index') }}" style="color: #1a237e; font-weight: 600;">
-              <i class="fa fa-home me-2" style="color: #1a237e;"></i> Home
+            <a
+              class="nav-link d-flex align-items-center sidebar-link"
+              href="{{ url_for('index') }}"
+              style="color: #1a237e; font-weight: 600"
+            >
+              <i class="fa fa-home me-2" style="color: #1a237e"></i> Home
             </a>
           </li>
           <li class="nav-item mb-2">
-            <a class="nav-link d-flex align-items-center sidebar-link" href="{{ url_for('uploadfile') }}" style="color: #1a237e; font-weight: 600;">
-              <i class="fa fa-upload me-2" style="color: #1a237e;"></i> Upload
+            <a
+              class="nav-link d-flex align-items-center sidebar-link"
+              href="{{ url_for('uploadfile') }}"
+              style="color: #1a237e; font-weight: 600"
+            >
+              <i class="fa fa-upload me-2" style="color: #1a237e"></i> Upload
             </a>
           </li>
           <li class="nav-item mb-2">
-            <a class="nav-link d-flex align-items-center sidebar-link" href="{{ url_for('results') }}" style="color: #1a237e; font-weight: 600;">
-              <i class="fa fa-chart-bar me-2" style="color: #1a237e;"></i> Results
+            <a
+              class="nav-link d-flex align-items-center sidebar-link"
+              href="{{ url_for('results') }}"
+              style="color: #1a237e; font-weight: 600"
+            >
+              <i class="fa fa-chart-bar me-2" style="color: #1a237e"></i>
+              Results
             </a>
           </li>
           <li class="nav-item mb-2">
-            <a class="nav-link d-flex align-items-center sidebar-link" href="#notifications" onclick="scrollToSection('notifications')" style="color: #1a237e; font-weight: 600;">
-              <i class="fa fa-bell me-2" style="color: #1a237e;"></i> Notifications
+            <a
+              class="nav-link d-flex align-items-center sidebar-link"
+              href="#notifications"
+              onclick="scrollToSection('notifications')"
+              style="color: #1a237e; font-weight: 600"
+            >
+              <i class="fa fa-bell me-2" style="color: #1a237e"></i>
+              Notifications
             </a>
           </li>
           <li class="nav-item mb-2">
-            <a class="nav-link d-flex align-items-center sidebar-link" href="{{ url_for('privacy') }}" style="color: #1a237e; font-weight: 600;">
-              <i class="fa fa-user-secret me-2" style="color: #1a237e;"></i> Privacy Policy
+            <a
+              class="nav-link d-flex align-items-center sidebar-link"
+              href="{{ url_for('privacy') }}"
+              style="color: #1a237e; font-weight: 600"
+            >
+              <i class="fa fa-user-secret me-2" style="color: #1a237e"></i>
+              Privacy Policy
             </a>
           </li>
           <li class="nav-item mb-2">
             {% if session.get('user_id') %}
-              <form method="GET" action="{{ url_for('logout') }}">
-                <button type="submit" class="nav-link d-flex align-items-center sidebar-link btn btn-link p-0" style="color: #1a237e; font-weight: 600;">
-                  <i class="fa fa-sign-out me-2" style="color: #1a237e;"></i> Logout
-                </button>
-              </form>
+            <form method="GET" action="{{ url_for('logout') }}">
+              <button
+                type="submit"
+                class="nav-link d-flex align-items-center sidebar-link btn btn-link p-0"
+                style="color: #1a237e; font-weight: 600"
+              >
+                <i class="fa fa-sign-out me-2" style="color: #1a237e"></i>
+                Logout
+              </button>
+            </form>
             {% else %}
-              <a class="nav-link d-flex align-items-center sidebar-link" href="{{ url_for('login') }}" style="color: #1a237e; font-weight: 600;">
-                <i class="fa fa-sign-in me-2" style="color: #1a237e;"></i> Login
-              </a>
+            <a
+              class="nav-link d-flex align-items-center sidebar-link"
+              href="{{ url_for('login') }}"
+              style="color: #1a237e; font-weight: 600"
+            >
+              <i class="fa fa-sign-in me-2" style="color: #1a237e"></i> Login
+            </a>
             {% endif %}
           </li>
         </ul>
       </nav>
       <!-- Main Content -->
-      <div class="main-content flex-grow-1" style="margin-left:220px; min-height:100vh; background: #f5f7fa;">
+      <div
+        class="main-content flex-grow-1"
+        style="margin-left: 220px; min-height: 100vh; background: #f5f7fa"
+      >
         <div class="container-fluid py-4">
-          {% block breadcrumb %}{% endblock %}
-          {% block content %}{% endblock %}
+          {% block breadcrumb %}{% endblock %} {% block content %}{% endblock %}
         </div>
       </div>
     </div>
     <!-- Toast Container -->
-    <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000; min-width: 300px;">
-      <div id="toast-container">
-        {% block toasts %}{% endblock %}
-      </div>
+    <div
+      aria-live="polite"
+      aria-atomic="true"
+      class="position-fixed bottom-0 end-0 p-3"
+      style="z-index: 2000; min-width: 300px"
+    >
+      <div id="toast-container">{% block toasts %}{% endblock %}</div>
     </div>
     <!-- Removed the floating settings/configurator button and its panel here -->
 
@@ -141,17 +197,29 @@
         new Chart(ctx, {
           type: "bar",
           data: {
-            labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-            datasets: [{
-              label: "Sales",
-              tension: 0.4,
-              borderWidth: 0,
-              borderRadius: 4,
-              borderSkipped: false,
-              backgroundColor: "#fff",
-              data: [450, 200, 100, 220, 500, 100, 400, 230, 500],
-              maxBarThickness: 6,
-            }],
+            labels: [
+              "Apr",
+              "May",
+              "Jun",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Oct",
+              "Nov",
+              "Dec",
+            ],
+            datasets: [
+              {
+                label: "Sales",
+                tension: 0.4,
+                borderWidth: 0,
+                borderRadius: 4,
+                borderSkipped: false,
+                backgroundColor: "#fff",
+                data: [450, 200, 100, 220, 500, 100, 400, 230, 500],
+                maxBarThickness: 6,
+              },
+            ],
           },
           options: {
             responsive: true,
@@ -160,18 +228,33 @@
             interaction: { intersect: false, mode: "index" },
             scales: {
               y: {
-                grid: { drawBorder: false, display: false, drawOnChartArea: false, drawTicks: false },
+                grid: {
+                  drawBorder: false,
+                  display: false,
+                  drawOnChartArea: false,
+                  drawTicks: false,
+                },
                 ticks: {
                   suggestedMin: 0,
                   suggestedMax: 500,
                   beginAtZero: true,
                   padding: 15,
-                  font: { size: 14, family: "Open Sans", style: "normal", lineHeight: 2 },
+                  font: {
+                    size: 14,
+                    family: "Open Sans",
+                    style: "normal",
+                    lineHeight: 2,
+                  },
                   color: "#fff",
                 },
               },
               x: {
-                grid: { drawBorder: false, display: false, drawOnChartArea: false, drawTicks: false },
+                grid: {
+                  drawBorder: false,
+                  display: false,
+                  drawOnChartArea: false,
+                  drawTicks: false,
+                },
                 ticks: { display: false },
               },
             },
@@ -193,7 +276,17 @@
         new Chart(ctx2, {
           type: "line",
           data: {
-            labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            labels: [
+              "Apr",
+              "May",
+              "Jun",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Oct",
+              "Nov",
+              "Dec",
+            ],
             datasets: [
               {
                 label: "Mobile apps",
@@ -228,21 +321,43 @@
             interaction: { intersect: false, mode: "index" },
             scales: {
               y: {
-                grid: { drawBorder: false, display: true, drawOnChartArea: true, drawTicks: false, borderDash: [5, 5] },
+                grid: {
+                  drawBorder: false,
+                  display: true,
+                  drawOnChartArea: true,
+                  drawTicks: false,
+                  borderDash: [5, 5],
+                },
                 ticks: {
                   display: true,
                   padding: 10,
                   color: "#b2b9bf",
-                  font: { size: 11, family: "Open Sans", style: "normal", lineHeight: 2 },
+                  font: {
+                    size: 11,
+                    family: "Open Sans",
+                    style: "normal",
+                    lineHeight: 2,
+                  },
                 },
               },
               x: {
-                grid: { drawBorder: false, display: false, drawOnChartArea: false, drawTicks: false, borderDash: [5, 5] },
+                grid: {
+                  drawBorder: false,
+                  display: false,
+                  drawOnChartArea: false,
+                  drawTicks: false,
+                  borderDash: [5, 5],
+                },
                 ticks: {
                   display: true,
                   color: "#b2b9bf",
                   padding: 20,
-                  font: { size: 11, family: "Open Sans", style: "normal", lineHeight: 2 },
+                  font: {
+                    size: 11,
+                    family: "Open Sans",
+                    style: "normal",
+                    lineHeight: 2,
+                  },
                 },
               },
             },
@@ -265,98 +380,114 @@
     <script src="{{ url_for('static', filename='assets/js/soft-ui-dashboard.min.js')}}?v=1.0.6"></script>
     {% block js %} {% endblock %}
     <script>
-    function loadNotifications() {
-        fetch('/notifications')
-            .then(response => response.json())
-            .then(data => {
-                const notificationList = document.getElementById('notificationList');
-                const notificationBadge = document.getElementById('notificationBadge');
-                const unreadCount = data.notifications.filter(n => !n.read).length;
-                
-                notificationBadge.textContent = unreadCount;
-                notificationBadge.style.display = unreadCount > 0 ? 'block' : 'none';
-                
-                notificationList.innerHTML = '';
-                data.notifications.forEach(notification => {
-                    const notificationElement = document.createElement('div');
-                    notificationElement.className = `dropdown-item ${notification.read ? 'text-muted' : ''}`;
-                    notificationElement.innerHTML = `
+      function loadNotifications() {
+        fetch("/notifications")
+          .then((response) => response.json())
+          .then((data) => {
+            const notificationList =
+              document.getElementById("notificationList");
+            const notificationBadge =
+              document.getElementById("notificationBadge");
+            const unreadCount = data.notifications.filter(
+              (n) => !n.read
+            ).length;
+
+            notificationBadge.textContent = unreadCount;
+            notificationBadge.style.display =
+              unreadCount > 0 ? "block" : "none";
+
+            notificationList.innerHTML = "";
+            data.notifications.forEach((notification) => {
+              const notificationElement = document.createElement("div");
+              notificationElement.className = `dropdown-item ${
+                notification.read ? "text-muted" : ""
+              }`;
+              notificationElement.innerHTML = `
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-0">${notification.message}</p>
-                                <small class="text-muted">${new Date(notification.timestamp).toLocaleString()}</small>
+                                <small class="text-muted">${new Date(
+                                  notification.timestamp
+                                ).toLocaleString()}</small>
                             </div>
-                            ${!notification.read ? `
+                            ${
+                              !notification.read
+                                ? `
                                 <button class="btn btn-link btn-sm text-primary" onclick="markAsRead(${notification.id})">
                                     Mark as read
                                 </button>
-                            ` : ''}
+                            `
+                                : ""
+                            }
                         </div>
                     `;
-                    notificationList.appendChild(notificationElement);
-                });
-                
-                if (data.notifications.length === 0) {
-                    notificationList.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
-                }
+              notificationList.appendChild(notificationElement);
             });
-    }
 
-    function markAsRead(notificationId) {
+            if (data.notifications.length === 0) {
+              notificationList.innerHTML =
+                '<div class="dropdown-item text-center">No notifications</div>';
+            }
+          });
+      }
+
+      function markAsRead(notificationId) {
         fetch(`/notifications/mark-read/${notificationId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(() => loadNotifications());
-    }
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then(() => loadNotifications());
+      }
 
-    function clearNotifications() {
-        fetch('/notifications/clear', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(() => loadNotifications());
-    }
+      function clearNotifications() {
+        fetch("/notifications/clear", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then(() => loadNotifications());
+      }
 
-    // Load notifications when the page loads
-    document.addEventListener('DOMContentLoaded', loadNotifications);
+      // Load notifications when the page loads
+      document.addEventListener("DOMContentLoaded", loadNotifications);
 
-    // Refresh notifications every 2 minutes
-    setInterval(loadNotifications, 120000);
+      // Refresh notifications every 2 minutes
+      setInterval(loadNotifications, 120000);
     </script>
     <script>
       // Show all Bootstrap toasts automatically
-      document.addEventListener('DOMContentLoaded', function() {
-        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        toastElList.forEach(function(toastEl) {
+      document.addEventListener("DOMContentLoaded", function () {
+        var toastElList = [].slice.call(document.querySelectorAll(".toast"));
+        toastElList.forEach(function (toastEl) {
           var toast = new bootstrap.Toast(toastEl);
           toast.show();
         });
       });
     </script>
     <script>
-    function scrollToSection(sectionId) {
-      const section = document.getElementById(sectionId);
-      if (section) {
-        section.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        // Show a toast if notifications section is missing
-        if(sectionId === 'notifications') {
-          const toast = document.createElement('div');
-          toast.className = 'toast align-items-center text-bg-info border-0 mb-2 show';
-          toast.style.position = 'fixed';
-          toast.style.bottom = '2rem';
-          toast.style.right = '2rem';
-          toast.innerHTML = '<div class="d-flex"><div class="toast-body">No notifications section found.</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
-          document.body.appendChild(toast);
-          setTimeout(() => { toast.remove(); }, 3000);
+      function scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth" });
+        } else {
+          // Show a toast if notifications section is missing
+          if (sectionId === "notifications") {
+            const toast = document.createElement("div");
+            toast.className =
+              "toast align-items-center text-bg-info border-0 mb-2 show";
+            toast.style.position = "fixed";
+            toast.style.bottom = "2rem";
+            toast.style.right = "2rem";
+            toast.innerHTML =
+              '<div class="d-flex"><div class="toast-body">No notifications section found.</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+            document.body.appendChild(toast);
+            setTimeout(() => {
+              toast.remove();
+            }, 3000);
+          }
         }
       }
-    }
     </script>
   </body>
 </html>
